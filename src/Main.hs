@@ -3,6 +3,7 @@ module Main (main) where
 import Data.IORef
 import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
+import System.INotify
 
 main :: IO ()
 main = do
@@ -25,6 +26,14 @@ showMainWindow = do
         widgetQueueDraw canvas
         return True
     timeoutAdd x 10
+    testINotify
+    return ()
+
+testINotify = do
+    i <- initINotify
+    addWatch i [Modify, MoveIn, MoveOut] "src" $ \e -> do
+        putStrLn $ "something changed: " ++ (show e)
+        return ()
     return ()
 
 builderFromFile :: FilePath -> IO Builder
