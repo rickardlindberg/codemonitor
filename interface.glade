@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkWindow" id="main_window">
+    <property name="title" translatable="yes">Code Monitor</property>
+    <child>
+      <object class="GtkDrawingArea" id="canvas">
+        <property name="visible">True</property>
+      </object>
+    </child>
+  </object>
+</interface>

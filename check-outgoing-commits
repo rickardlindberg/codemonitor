@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+for rev in $(git rev-list --reverse origin/master..master); do
+    git log --oneline -1 $rev
+    git checkout --quiet $rev
+    ./clean
+    ./run-tests
+    git reset --hard
+done
+
+git checkout --quiet master
