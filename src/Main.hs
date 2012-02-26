@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Data.IORef
 import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
 
@@ -11,12 +12,20 @@ main = do
 
 showMainWindow :: IO ()
 showMainWindow = do
+    iRef       <- newIORef 0
     builder    <- builderFromFile "interface.glade"
     mainWindow <- builderGetObject builder castToWindow "main_window"
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas
+    canvas     `onExpose`  redraw canvas iRef
     widgetShowAll mainWindow
+    let x = do
+        modifyIORef iRef (+1)
+        i <- readIORef iRef
+        widgetQueueDraw canvas
+        return True
+    timeoutAdd x 10
+    return ()
 
 builderFromFile :: FilePath -> IO Builder
 builderFromFile path = do
@@ -24,22 +33,31 @@ builderFromFile path = do
     builderAddFromFile builder path
     return builder
 
-redraw canvas event = do
+redraw canvas iRef event = do
+    i <- readIORef iRef
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
-    renderWithDrawable drawin (myDraw (fromIntegral w) (fromIntegral h))
+    renderWithDrawable drawin (myDraw i (fromIntegral w) (fromIntegral h))
     return True
 
-myDraw :: Double -> Double -> Render ()
-myDraw w h = do
+myDraw :: Integer -> Double -> Double -> Render ()
+myDraw i w h = do
     setSourceRGB 1 1 1
     paint
 
+    let deltaW = fromIntegral (i `mod` floor w)
+    let deltaH = fromIntegral (i `mod` floor h)
+
+    let x1 = 0 + deltaW
+    let x2 = w - deltaW
+    let y1 = 0 + deltaH
+    let y2 = h - deltaH
+
     setSourceRGB 0 0 0
-    moveTo 0 0
-    lineTo w h
-    moveTo w 0
-    lineTo 0 h
+    moveTo x1 0
+    lineTo x2 h
+    moveTo w y1
+    lineTo 0 y2
     setLineWidth (0.1 * (h + w))
     stroke
 
