@@ -4,7 +4,7 @@ import Control.Monad
 import Data.IORef
 import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
-import System.INotify
+import Notifier
 import System.Process
 
 main :: IO ()
@@ -29,7 +29,7 @@ showMainWindow = do
         widgetQueueDraw canvas
         return True
     timeoutAdd x 10
-    testINotify jobsRef
+    setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef)
     return ()
 
 updateJobsRef :: Maybe FilePath -> IORef [Job] -> IO ()
@@ -53,14 +53,6 @@ updateJobs file = mapM updateJob
                 Nothing -> return $ Job name args (Just h)
                 _       -> return $ Job name args Nothing
         updateJob job = return job
-
-testINotify jobsRef = do
-    i <- initINotify
-    addWatch i [Modify, MoveIn, MoveOut] "src" $ \e -> do
-        putStrLn $ "something changed: " ++ (show e)
-        updateJobsRef (Just "") jobsRef
-        return ()
-    return ()
 
 builderFromFile :: FilePath -> IO Builder
 builderFromFile path = do
