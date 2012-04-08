@@ -40,7 +40,7 @@ updateJobsRef changedFile jobsRef = do
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
     where
-        updateJob (Job name args Nothing) = do
+        updateJob (Job name args Nothing) =
             case file of
                 Just _ -> do
                     (_, _, _, handle) <- createProcess (proc name args)

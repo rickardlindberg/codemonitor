@@ -6,6 +6,6 @@ setupNotifications :: FilePath -> (String -> IO ()) -> IO ()
 setupNotifications dir nofifyFileChanged = do
     i <- initINotify
     addWatch i [Modify, MoveIn, MoveOut] dir $ \e -> do
-        putStrLn (show e)
+        print e
         nofifyFileChanged ""
     return ()
