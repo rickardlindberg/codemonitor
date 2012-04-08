@@ -1,9 +1,11 @@
 module Main (main) where
 
+import Control.Monad
 import Data.IORef
 import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
 import System.INotify
+import System.Process
 
 main :: IO ()
 main = do
@@ -11,28 +13,52 @@ main = do
     showMainWindow
     mainGUI
 
+data Job = Job String [String] (Maybe ProcessHandle)
+
 showMainWindow :: IO ()
 showMainWindow = do
-    iRef       <- newIORef 0
+    jobsRef    <- newIORef [Job "ls" [] Nothing,
+                            Job "find" ["/home/rick", "README"] Nothing]
     builder    <- builderFromFile "interface.glade"
     mainWindow <- builderGetObject builder castToWindow "main_window"
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas iRef
+    canvas     `onExpose`  redraw canvas jobsRef
     widgetShowAll mainWindow
     let x = do
-        modifyIORef iRef (+1)
-        i <- readIORef iRef
         widgetQueueDraw canvas
         return True
     timeoutAdd x 10
-    testINotify
+    testINotify jobsRef
     return ()
 
-testINotify = do
+updateJobsRef :: Maybe FilePath -> IORef [Job] -> IO ()
+updateJobsRef changedFile jobsRef = do
+    jobs <- readIORef jobsRef
+    newJobs <- updateJobs changedFile jobs
+    writeIORef jobsRef newJobs
+
+updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
+updateJobs file = mapM updateJob
+    where
+        updateJob (Job name args Nothing) = do
+            case file of
+                Just _ -> do
+                    (_, _, _, handle) <- createProcess (proc name args)
+                    return $ Job name args (Just handle)
+                Nothing -> return $ Job name args Nothing
+        updateJob (Job name args (Just h)) = do
+            exitCode <- getProcessExitCode h
+            case exitCode of
+                Nothing -> return $ Job name args (Just h)
+                _       -> return $ Job name args Nothing
+        updateJob job = return job
+
+testINotify jobsRef = do
     i <- initINotify
     addWatch i [Modify, MoveIn, MoveOut] "src" $ \e -> do
         putStrLn $ "something changed: " ++ (show e)
+        updateJobsRef (Just "") jobsRef
         return ()
     return ()
 
@@ -42,42 +68,30 @@ builderFromFile path = do
     builderAddFromFile builder path
     return builder
 
-redraw canvas iRef event = do
-    i <- readIORef iRef
+redraw canvas jobsRef event = do
+    updateJobsRef Nothing jobsRef
+
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
-    renderWithDrawable drawin (myDraw i (fromIntegral w) (fromIntegral h))
+    jobs <- readIORef jobsRef
+    renderWithDrawable drawin (myDraw jobs (fromIntegral w) (fromIntegral h))
     return True
 
-myDraw :: Integer -> Double -> Double -> Render ()
-myDraw i w h = do
+myDraw :: [Job] -> Double -> Double -> Render ()
+myDraw jobs w h = do
     setSourceRGB 1 1 1
     paint
 
-    let deltaW = fromIntegral (i `mod` floor w)
-    let deltaH = fromIntegral (i `mod` floor h)
+    forM_ (zip jobs [1..length jobs]) $ \(job, i) -> do
+        let y = fromIntegral(10 + 10 * i)
+        let (r, g, b, a) = color job
+        setSourceRGBA r g b a
+        moveTo 10 y
+        showText (name job)
 
-    let x1 = 0 + deltaW
-    let x2 = w - deltaW
-    let y1 = 0 + deltaH
-    let y2 = h - deltaH
+name :: Job -> String
+name (Job name args _) = name
 
-    setSourceRGB 0 0 0
-    moveTo x1 0
-    lineTo x2 h
-    moveTo w y1
-    lineTo 0 y2
-    setLineWidth (0.1 * (h + w))
-    stroke
-
-    rectangle 0 0 (0.5 * w) (0.5 * h)
-    setSourceRGBA 1 0 0 0.8
-    fill
-
-    rectangle 0 (0.5 * h) (0.5 * w) (0.5 * h)
-    setSourceRGBA 0 1 0 0.6
-    fill
-
-    rectangle (0.5 * w) 0 (0.5 * w) (0.5 * h)
-    setSourceRGBA 0 0 1 0.4
-    fill
+color :: Job -> (Double, Double, Double, Double)
+color (Job _ _ Nothing) = (0, 1, 0, 1)
+color (Job _ _ (Just _)) = (0, 1, 1, 1)
