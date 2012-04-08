@@ -1,10 +1,11 @@
 module Main (main) where
 
-import Control.Monad
 import Data.IORef
 import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
+import Job
 import Notifier
+import Render
 import System.Process
 
 main :: IO ()
@@ -12,8 +13,6 @@ main = do
     initGUI
     showMainWindow
     mainGUI
-
-data Job = Job String [String] (Maybe ProcessHandle)
 
 showMainWindow :: IO ()
 showMainWindow = do
@@ -66,24 +65,5 @@ redraw canvas jobsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
-    renderWithDrawable drawin (myDraw jobs (fromIntegral w) (fromIntegral h))
+    renderWithDrawable drawin (renderScreen jobs (fromIntegral w) (fromIntegral h))
     return True
-
-myDraw :: [Job] -> Double -> Double -> Render ()
-myDraw jobs w h = do
-    setSourceRGB 1 1 1
-    paint
-
-    forM_ (zip jobs [1..length jobs]) $ \(job, i) -> do
-        let y = fromIntegral(10 + 10 * i)
-        let (r, g, b, a) = color job
-        setSourceRGBA r g b a
-        moveTo 10 y
-        showText (name job)
-
-name :: Job -> String
-name (Job name args _) = name
-
-color :: Job -> (Double, Double, Double, Double)
-color (Job _ _ Nothing) = (0, 1, 0, 1)
-color (Job _ _ (Just _)) = (0, 1, 1, 1)
