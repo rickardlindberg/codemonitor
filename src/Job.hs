@@ -28,7 +28,7 @@ createJobs = do
     return [ Job "ls" [] "Main.hs" Idle Nothing m1
            , Job "sleep" ["1"] "\\.hs$" Idle Nothing m2
            , Job "sleep" ["2"] "\\.hs$" Idle Nothing m3
-           , Job "sleep" ["3"] "\\.hs$" Idle Nothing m4
+           , Job "hlint" ["src"] "\\.hs$" Idle Nothing m4
            , Job "sh" ["run-tests"] "\\.hs$" Idle Nothing m5
            ]
 
@@ -60,7 +60,7 @@ runThread job = do
     (exit, stdout, stderr) <- readProcessWithExitCode (name job) (args job) ""
     if exit == ExitSuccess
         then putMVar (threadMvar job) Idle
-        else putMVar (threadMvar job) (Fail stderr)
+        else putMVar (threadMvar job) (Fail $ stderr ++ stdout)
     return ()
 
 fullName :: Job -> String
