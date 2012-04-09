@@ -23,6 +23,7 @@ renderScreen jobs w h = do
 color :: Job -> (Double, Double, Double, Double)
 color (Job { status = Idle }) = (0, 1, 0, 1)
 color (Job { status = Working }) = (0, 1, 1, 1)
+color (Job { status = Fail _ }) = (1, 0, 0, 1)
 
 data Rect = Rect Double Double Double Double
 

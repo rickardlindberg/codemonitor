@@ -2,10 +2,11 @@ module Job where
 
 import Control.Concurrent
 import Data.IORef
+import System.Exit
 import System.Process
 import Text.Regex.Posix
 
-data Status = Idle | Working
+data Status = Idle | Working | Fail String
 
 data Job = Job
     { name :: String
@@ -55,6 +56,8 @@ shouldReRun _ _ = False
 
 runThread :: Job -> IO ()
 runThread job = do
-    out <- readProcess (name job) (args job) ""
-    putMVar (threadMvar job) Idle
+    (exit, stdout, stderr) <- readProcessWithExitCode (name job) (args job) ""
+    if exit == ExitSuccess
+        then putMVar (threadMvar job) Idle
+        else putMVar (threadMvar job) (Fail stderr)
     return ()
