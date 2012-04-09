@@ -32,6 +32,7 @@ updateJobs file = mapM updateJob
         updateJob job = do
             if shouldReRun job file
                 then do
+                    killIt job
                     threadId <- forkIO $ runThread job
                     return $ job { thread = Just threadId, status = Working }
                 else do
@@ -39,6 +40,10 @@ updateJobs file = mapM updateJob
                     case value of
                         Nothing -> return job
                         Just s -> return $ job { thread = Nothing, status = s }
+
+killIt :: Job -> IO ()
+killIt Job { thread = Just id } = killThread id
+killIt _ = return ()
 
 shouldReRun :: Job -> Maybe FilePath -> Bool
 shouldReRun job (Just f) = True
