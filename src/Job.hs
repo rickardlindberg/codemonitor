@@ -3,10 +3,11 @@ module Job where
 import Data.IORef
 import System.Process
 
-data Job = Job String [String] (Maybe ProcessHandle)
-
-name :: Job -> String
-name (Job name args _) = name
+data Job = Job
+    { name :: String
+    , args :: [String]
+    , process :: Maybe ProcessHandle
+    }
 
 createJobs :: [Job]
 createJobs = [ Job "ls" [] Nothing
@@ -16,15 +17,14 @@ createJobs = [ Job "ls" [] Nothing
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
     where
-        updateJob (Job name args Nothing) =
+        updateJob job@(Job { process = Nothing }) =
             case file of
                 Just _ -> do
-                    (_, _, _, handle) <- createProcess (proc name args)
-                    return $ Job name args (Just handle)
-                Nothing -> return $ Job name args Nothing
-        updateJob (Job name args (Just h)) = do
+                    (_, _, _, handle) <- createProcess (proc (name job) (args job))
+                    return $ job { process = Just handle }
+                Nothing -> return job
+        updateJob job@(Job { process = Just h }) = do
             exitCode <- getProcessExitCode h
             case exitCode of
-                Nothing -> return $ Job name args (Just h)
-                _       -> return $ Job name args Nothing
-        updateJob job = return job
+                Nothing -> return $ job { process = Just h }
+                _       -> return $ job { process = Nothing }

@@ -21,8 +21,8 @@ renderScreen jobs w h = do
         showText (name job)
 
 color :: Job -> (Double, Double, Double, Double)
-color (Job _ _ Nothing) = (0, 1, 0, 1)
-color (Job _ _ (Just _)) = (0, 1, 1, 1)
+color (Job { process = Nothing }) = (0, 1, 0, 1)
+color (Job { process = Just _ }) = (0, 1, 1, 1)
 
 data Rect = Rect Double Double Double Double
 
