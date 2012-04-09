@@ -46,7 +46,7 @@ killIt Job { thread = Just id } = killThread id
 killIt _ = return ()
 
 shouldReRun :: Job -> Maybe FilePath -> Bool
-shouldReRun job (Just f) = True
+shouldReRun job (Just f) = f == "Job.hs"
 shouldReRun _ _ = False
 
 runThread :: Job -> IO ()

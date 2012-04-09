@@ -5,7 +5,8 @@ import System.INotify
 setupNotifications :: FilePath -> (String -> IO ()) -> IO ()
 setupNotifications dir nofifyFileChanged = do
     i <- initINotify
-    addWatch i [Modify, MoveIn, MoveOut] dir $ \e -> do
-        print e
-        nofifyFileChanged ""
+    addWatch i [Modify, MoveIn, MoveOut] dir handle
     return ()
+    where
+        handle (Modified _ (Just f)) = nofifyFileChanged f
+        handle _                     = return ()
