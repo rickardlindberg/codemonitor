@@ -10,6 +10,7 @@ data Status = Idle | Working
 data Job = Job
     { name :: String
     , args :: [String]
+    , matchExpr :: String
     , status :: Status
     , thread :: Maybe ThreadId
     , threadMvar :: MVar Status
@@ -21,10 +22,12 @@ createJobs = do
     m2 <- newEmptyMVar
     m3 <- newEmptyMVar
     m4 <- newEmptyMVar
-    return [ Job "ls" [] Idle Nothing m1
-           , Job "sleep" ["1"] Idle Nothing m2
-           , Job "sleep" ["2"] Idle Nothing m3
-           , Job "sleep" ["3"] Idle Nothing m4
+    m5 <- newEmptyMVar
+    return [ Job "ls" [] "Main.hs" Idle Nothing m1
+           , Job "sleep" ["1"] "\\.hs$" Idle Nothing m2
+           , Job "sleep" ["2"] "\\.hs$" Idle Nothing m3
+           , Job "sleep" ["3"] "\\.hs$" Idle Nothing m4
+           , Job "sh" ["run-tests"] "\\.hs$" Idle Nothing m5
            ]
 
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
@@ -47,7 +50,7 @@ killIt Job { thread = Just id } = killThread id
 killIt _ = return ()
 
 shouldReRun :: Job -> Maybe FilePath -> Bool
-shouldReRun job (Just f) = f =~ "\\.hs$"
+shouldReRun job (Just f) = f =~ (matchExpr job)
 shouldReRun _ _ = False
 
 runThread :: Job -> IO ()
