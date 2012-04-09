@@ -18,27 +18,34 @@ createJobs :: IO [Job]
 createJobs = do
     m1 <- newEmptyMVar
     m2 <- newEmptyMVar
+    m3 <- newEmptyMVar
+    m4 <- newEmptyMVar
     return [ Job "ls" [] Idle Nothing m1
-           , Job "find" ["/home/rick/downloads"] Idle Nothing m2
+           , Job "sleep" ["1"] Idle Nothing m2
+           , Job "sleep" ["2"] Idle Nothing m3
+           , Job "sleep" ["3"] Idle Nothing m4
            ]
 
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
     where
-        updateJob job@(Job { thread = Nothing, threadMvar = mvar }) =
-            case file of
-                Just _ -> do
-                    threadId <- forkIO $ runThread job mvar
+        updateJob job = do
+            if shouldReRun job file
+                then do
+                    threadId <- forkIO $ runThread job
                     return $ job { thread = Just threadId, status = Working }
-                Nothing -> return job
-        updateJob job@(Job { thread = Just _, threadMvar = mvar }) = do
-            value <- tryTakeMVar mvar
-            case value of
-                Nothing -> return job
-                Just s -> return $ job { thread = Nothing, status = s }
+                else do
+                    value <- tryTakeMVar (threadMvar job)
+                    case value of
+                        Nothing -> return job
+                        Just s -> return $ job { thread = Nothing, status = s }
 
-runThread :: Job -> MVar Status -> IO ()
-runThread job mvar = do
+shouldReRun :: Job -> Maybe FilePath -> Bool
+shouldReRun job (Just f) = True
+shouldReRun _ _ = False
+
+runThread :: Job -> IO ()
+runThread job = do
     out <- readProcess (name job) (args job) ""
-    putMVar mvar Idle
+    putMVar (threadMvar job) Idle
     return ()
