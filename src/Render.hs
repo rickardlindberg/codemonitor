@@ -1,7 +1,7 @@
 module Render where
 
 import Control.Monad
-import Graphics.Rendering.Cairo
+import Graphics.Rendering.Cairo hiding (status)
 import Job
 
 renderScreen :: [Job] -> Double -> Double -> Render ()
@@ -21,8 +21,8 @@ renderScreen jobs w h = do
         showText (name job)
 
 color :: Job -> (Double, Double, Double, Double)
-color (Job { process = Nothing }) = (0, 1, 0, 1)
-color (Job { process = Just _ }) = (0, 1, 1, 1)
+color (Job { status = Idle }) = (0, 1, 0, 1)
+color (Job { status = Working }) = (0, 1, 1, 1)
 
 data Rect = Rect Double Double Double Double
 

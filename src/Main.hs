@@ -20,7 +20,8 @@ showMainWindow = do
     mainWindow <- builderGetObject builder castToWindow "main_window"
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
 
-    jobsRef    <- newIORef createJobs
+    jobs       <- createJobs
+    jobsRef    <- newIORef jobs
     timeoutAdd (widgetQueueDraw canvas >> return True) 10
     setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef)
 
