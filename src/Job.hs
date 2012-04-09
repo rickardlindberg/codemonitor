@@ -3,6 +3,7 @@ module Job where
 import Control.Concurrent
 import Data.IORef
 import System.Process
+import Text.Regex.Posix
 
 data Status = Idle | Working
 
@@ -46,7 +47,7 @@ killIt Job { thread = Just id } = killThread id
 killIt _ = return ()
 
 shouldReRun :: Job -> Maybe FilePath -> Bool
-shouldReRun job (Just f) = f == "Job.hs"
+shouldReRun job (Just f) = f =~ "\\.hs$"
 shouldReRun _ _ = False
 
 runThread :: Job -> IO ()
