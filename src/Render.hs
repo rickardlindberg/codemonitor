@@ -17,13 +17,24 @@ renderScreen jobs w h = do
         fill
 
         setSourceRGBA 0 0 0 1
-        moveTo 10 (y+10)
+        moveTo 10 (y+20)
         showText (name job)
+
+        let errors = errorText job
+        let ys = map (\x -> fromIntegral x*10 + y + 20) [1..length errors]
+        forM_ (zip errors ys) $ \(e, y) -> do
+            moveTo 20 y
+            showText e
+        return ()
 
 color :: Job -> (Double, Double, Double, Double)
 color (Job { status = Idle }) = (0, 1, 0, 1)
 color (Job { status = Working }) = (0, 1, 1, 1)
 color (Job { status = Fail _ }) = (1, 0, 0, 1)
+
+errorText :: Job -> [String]
+errorText (Job { status = Fail s }) = lines s
+errorText _ = []
 
 data Rect = Rect Double Double Double Double
 
