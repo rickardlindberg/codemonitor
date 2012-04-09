@@ -35,7 +35,7 @@ createJobs = do
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
     where
-        updateJob job = do
+        updateJob job =
             if shouldReRun job file
                 then do
                     killIt job
@@ -52,7 +52,7 @@ killIt Job { thread = Just id } = killThread id
 killIt _ = return ()
 
 shouldReRun :: Job -> Maybe FilePath -> Bool
-shouldReRun job (Just f) = f =~ (matchExpr job)
+shouldReRun job (Just f) = f =~ matchExpr job
 shouldReRun _ _ = False
 
 runThread :: Job -> IO ()
@@ -64,4 +64,4 @@ runThread job = do
     return ()
 
 fullName :: Job -> String
-fullName (Job { name = name, args = args }) = name ++ " " ++ (intercalate " " args)
+fullName (Job { name = name, args = args }) = name ++ " " ++ intercalate " " args
