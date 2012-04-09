@@ -9,11 +9,13 @@ renderScreen jobs w h = do
     setSourceRGB 1 1 1
     paint
 
-    forM_ (zip jobs (findRects (Rect 0 0 w h) jobs)) $ \(job, Rect x y w h) -> do
+    forM_ (zip jobs (findRects (shrink 0.25 (Rect 0 0 w h)) jobs)) $ \(job, rect) -> do
+        let (Rect x y w h) = shrink 0.5 rect
+
         newPath
         let (r, g, b, a) = color job
         setSourceRGBA r g b a
-        rectangle (x+5) (y+5) (w-10) (h-10)
+        rectangle x y w h
         fill
 
         setSourceRGBA 0 0 0 1
@@ -61,16 +63,19 @@ errorText _ = []
 
 data Rect = Rect Double Double Double Double
 
+shrink :: Double -> Rect -> Rect
+shrink by (Rect x y w h) = Rect (x+by) (y+by) (w-2*by) (h-2*by)
+
 splitVertical :: Rect -> Int -> [Rect]
 splitVertical (Rect x y w h) n = map calcNew [1..n]
     where
-        calcNew n = Rect x ((fromIntegral(n)-1)*newH) w newH
+        calcNew n = Rect x (y+(fromIntegral(n)-1)*newH) w newH
         newH = h / fromIntegral(n)
 
 splitHorizontal :: Rect -> Int -> [Rect]
 splitHorizontal (Rect x y w h) n = map calcNew [1..n]
     where
-        calcNew n = Rect ((fromIntegral(n)-1)*newW) y newW h
+        calcNew n = Rect (x+(fromIntegral(n)-1)*newW) y newW h
         newW = w / fromIntegral(n)
 
 divideVertical :: Rect -> Double -> (Rect, Rect)
