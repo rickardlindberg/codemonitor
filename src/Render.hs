@@ -20,7 +20,7 @@ renderScreen jobs w h = do
 
         setSourceRGBA 0 0 0 1
         moveTo (x + 10) (y+20)
-        showText (name job)
+        showText (fullName job)
 
         let errors = errorText job
         let ys = map (\x -> fromIntegral x*10 + y + 20) [1..length errors]

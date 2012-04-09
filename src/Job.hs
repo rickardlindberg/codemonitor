@@ -2,6 +2,7 @@ module Job where
 
 import Control.Concurrent
 import Data.IORef
+import Data.List
 import System.Exit
 import System.Process
 import Text.Regex.Posix
@@ -61,3 +62,6 @@ runThread job = do
         then putMVar (threadMvar job) Idle
         else putMVar (threadMvar job) (Fail stderr)
     return ()
+
+fullName :: Job -> String
+fullName (Job { name = name, args = args }) = name ++ " " ++ (intercalate " " args)
