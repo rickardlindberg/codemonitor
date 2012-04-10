@@ -1,7 +1,7 @@
 module Render where
 
 import Control.Monad
-import Graphics.Rendering.Cairo
+import Graphics.Rendering.Cairo hiding (status)
 import Job
 import Layout
 import Rect
@@ -39,3 +39,12 @@ renderJob (job, Rect x y w h) = do
         moveTo (x + 20) y
         showText e
     return ()
+
+color :: Job -> (Double, Double, Double, Double)
+color (Job { status = Idle }) = (0, 1, 0, 1)
+color (Job { status = Working }) = (0, 1, 1, 1)
+color (Job { status = Fail _ }) = (1, 0, 0, 1)
+
+errorText :: Job -> [String]
+errorText (Job { status = Fail s }) = lines s
+errorText _ = []

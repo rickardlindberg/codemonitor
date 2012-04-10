@@ -21,16 +21,3 @@ match tops bottoms (j:js) =
         head bottoms:match tops (tail bottoms) js
 
 count x y = length (filter x y)
-
-isFailed :: Job -> Bool
-isFailed (Job { status = Fail _ }) = True
-isFailed _ = False
-
-color :: Job -> (Double, Double, Double, Double)
-color (Job { status = Idle }) = (0, 1, 0, 1)
-color (Job { status = Working }) = (0, 1, 1, 1)
-color (Job { status = Fail _ }) = (1, 0, 0, 1)
-
-errorText :: Job -> [String]
-errorText (Job { status = Fail s }) = lines s
-errorText _ = []

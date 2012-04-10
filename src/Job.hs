@@ -7,8 +7,6 @@ import System.Exit
 import System.Process
 import Text.Regex.Posix
 
-data Status = Idle | Working | Fail String
-
 data Job = Job
     { name :: String
     , args :: [String]
@@ -17,6 +15,15 @@ data Job = Job
     , thread :: Maybe ThreadId
     , threadMvar :: MVar Status
     }
+
+data Status = Idle | Working | Fail String
+
+fullName :: Job -> String
+fullName (Job { name = name, args = args }) = name ++ " " ++ intercalate " " args
+
+isFailed :: Job -> Bool
+isFailed (Job { status = Fail _ }) = True
+isFailed _ = False
 
 createJobs :: IO [Job]
 createJobs = do
@@ -47,13 +54,13 @@ updateJobs file = mapM updateJob
                         Nothing -> return job
                         Just s -> return $ job { thread = Nothing, status = s }
 
-killIt :: Job -> IO ()
-killIt Job { thread = Just id } = killThread id
-killIt _ = return ()
-
 shouldReRun :: Job -> Maybe FilePath -> Bool
 shouldReRun job (Just f) = f =~ matchExpr job
 shouldReRun _ _ = False
+
+killIt :: Job -> IO ()
+killIt Job { thread = Just id } = killThread id
+killIt _ = return ()
 
 runThread :: Job -> IO ()
 runThread job = do
@@ -62,6 +69,3 @@ runThread job = do
         then putMVar (threadMvar job) Idle
         else putMVar (threadMvar job) (Fail $ stderr ++ stdout)
     return ()
-
-fullName :: Job -> String
-fullName (Job { name = name, args = args }) = name ++ " " ++ intercalate " " args
