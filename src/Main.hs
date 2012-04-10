@@ -1,12 +1,10 @@
 module Main (main) where
 
 import Data.IORef
-import Graphics.Rendering.Cairo
 import Graphics.UI.Gtk
 import Job
 import Notifier
 import Render
-import System.Process
 
 main :: IO ()
 main = do

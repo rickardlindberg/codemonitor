@@ -1,7 +1,6 @@
 module Job where
 
 import Control.Concurrent
-import Data.IORef
 import Data.List
 import System.Exit
 import System.Process

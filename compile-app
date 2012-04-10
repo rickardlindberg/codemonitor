@@ -1,2 +1,2 @@
 #!/bin/sh
-ghc -isrc --make src/Main.hs
+ghc -isrc --make -fwarn-unused-imports -Werror src/Main.hs
