@@ -1,6 +1,7 @@
 module Layout where
 
 import Job
+import Rect
 
 findRects :: Rect -> [Job] -> [Rect]
 findRects rect jobs =
@@ -33,24 +34,3 @@ color (Job { status = Fail _ }) = (1, 0, 0, 1)
 errorText :: Job -> [String]
 errorText (Job { status = Fail s }) = lines s
 errorText _ = []
-
-data Rect = Rect Double Double Double Double
-
-shrink :: Double -> Rect -> Rect
-shrink by (Rect x y w h) = Rect (x+by) (y+by) (w-2*by) (h-2*by)
-
-splitVertical :: Rect -> Int -> [Rect]
-splitVertical (Rect x y w h) n = map calcNew [1..n]
-    where
-        calcNew n = Rect x (y+(fromIntegral n-1)*newH) w newH
-        newH = h / fromIntegral n
-
-splitHorizontal :: Rect -> Int -> [Rect]
-splitHorizontal (Rect x y w h) n = map calcNew [1..n]
-    where
-        calcNew n = Rect (x+(fromIntegral n -1)*newW) y newW h
-        newW = w / fromIntegral n
-
-divideVertical :: Rect -> Double -> (Rect, Rect)
-divideVertical (Rect x y w h) percent = (Rect x y w splitH, Rect x splitH w (h - splitH))
-    where splitH = percent * h

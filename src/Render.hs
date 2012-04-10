@@ -4,6 +4,7 @@ import Control.Monad
 import Graphics.Rendering.Cairo
 import Job
 import Layout
+import Rect
 
 renderScreen :: [Job] -> Double -> Double -> Render ()
 renderScreen jobs w h = do
