@@ -21,8 +21,7 @@ showMainWindow = do
 
     lock       <- newEmptyMVar
 
-    jobs       <- createJobs
-    jobsRef    <- newIORef jobs
+    jobsRef    <- newIORef createJobs
     timeoutAdd (widgetQueueDraw canvas >> return True) 10
     setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef lock)
 
