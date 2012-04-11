@@ -37,6 +37,14 @@ builderFromFile path = do
     builderAddFromFile builder path
     return builder
 
+createJobs :: [Job]
+createJobs = [ processJob "ls" [] "Main.hs"
+             , processJob "sleep" ["1"] "\\.hs$"
+             , processJob "sleep" ["2"] "\\.hs$"
+             , processJob "hlint" ["src"] "\\.hs$"
+             , processJob "sh" ["run-tests"] "\\.hs$"
+             ]
+
 redraw canvas jobsRef lock event = do
     updateJobsRef Nothing jobsRef lock
     (w, h) <- widgetGetSize canvas

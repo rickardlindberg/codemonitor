@@ -2,6 +2,7 @@ module Job where
 
 import Control.Concurrent
 import Data.List
+import Prelude hiding (id)
 import System.Exit
 import System.Process
 import Text.Regex.Posix
@@ -28,45 +29,40 @@ isFailed :: Job -> Bool
 isFailed (Job { status = Fail _ }) = True
 isFailed _ = False
 
-createJobs :: [Job]
-createJobs = [ Job "ls" [] "Main.hs" Idle Nothing
-             , Job "sleep" ["1"] "\\.hs$" Idle Nothing
-             , Job "sleep" ["2"] "\\.hs$" Idle Nothing
-             , Job "hlint" ["src"] "\\.hs$" Idle Nothing
-             , Job "sh" ["run-tests"] "\\.hs$" Idle Nothing
-             ]
+processJob :: String -> [String] -> String -> Job
+processJob name args expr = Job name args expr Idle Nothing
 
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
     where
         updateJob job =
-            if shouldReRun job file
+            if shouldStartThread job file
                 then do
-                    killIt job
+                    cancel job
                     mvar <- newEmptyMVar
                     threadId <- forkIO $ runThread job mvar
                     return $ job { thread = Just (Thread threadId mvar), status = Working }
                 else do
-                    value <- myTry job
+                    value <- tryGetNewStatus job
                     case value of
                         Nothing -> return job
-                        Just s -> return $ job { thread = Nothing, status = s }
+                        Just s  -> return $ job { thread = Nothing, status = s }
 
-myTry Job { thread = Just (Thread _ mvar) } = tryTakeMVar mvar
-myTry job = return Nothing
+shouldStartThread :: Job -> Maybe FilePath -> Bool
+shouldStartThread job (Just f) = f =~ matchExpr job
+shouldStartThread _ _ = False
 
-shouldReRun :: Job -> Maybe FilePath -> Bool
-shouldReRun job (Just f) = f =~ matchExpr job
-shouldReRun _ _ = False
-
-killIt :: Job -> IO ()
-killIt Job { thread = Just (Thread id _) } = killThread id
-killIt _ = return ()
+cancel :: Job -> IO ()
+cancel Job { thread = Just (Thread { id = id }) } = killThread id
+cancel _ = return ()
 
 runThread :: Job -> MVar Status -> IO ()
-runThread job mvar = do
+runThread job result = do
     (exit, stdout, stderr) <- readProcessWithExitCode (name job) (args job) ""
     if exit == ExitSuccess
-        then putMVar mvar Idle
-        else putMVar mvar (Fail $ stderr ++ stdout)
+        then putMVar result Idle
+        else putMVar result (Fail $ stderr ++ stdout)
     return ()
+
+tryGetNewStatus Job { thread = Just (Thread { result = result }) } = tryTakeMVar result
+tryGetNewStatus _ = return Nothing
