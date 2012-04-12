@@ -1,14 +1,13 @@
 module Job where
 
 import Control.Concurrent
-import Data.List
-import Prelude hiding (id)
 import System.Exit
 import System.Process
 import Text.Regex.Posix
 
 data Job = Job
-    { name :: String
+    { jobId :: String
+    , name :: String
     , args :: [String]
     , matchExpr :: String
     , status :: Status
@@ -16,7 +15,7 @@ data Job = Job
     }
 
 data Thread = Thread
-    { id :: ThreadId
+    { threadId :: ThreadId
     , result :: MVar Status
     }
 
@@ -29,8 +28,8 @@ isFailed :: Job -> Bool
 isFailed (Job { status = Fail _ }) = True
 isFailed _ = False
 
-processJob :: String -> [String] -> String -> Job
-processJob name args expr = Job name args expr Idle Nothing
+processJob :: String -> String -> [String] -> String -> Job
+processJob jobId name args expr = Job jobId name args expr Idle Nothing
 
 updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
 updateJobs file = mapM updateJob
@@ -53,7 +52,7 @@ shouldStartThread job (Just f) = f =~ matchExpr job
 shouldStartThread _ _ = False
 
 cancel :: Job -> IO ()
-cancel Job { thread = Just (Thread { id = id }) } = killThread id
+cancel Job { thread = Just (Thread { threadId = id }) } = killThread id
 cancel _ = return ()
 
 runThread :: Job -> MVar Status -> IO ()

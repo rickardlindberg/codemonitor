@@ -38,11 +38,11 @@ builderFromFile path = do
     return builder
 
 createJobs :: [Job]
-createJobs = [ processJob "ls" [] "Main.hs"
-             , processJob "sleep" ["1"] "\\.hs$"
-             , processJob "sleep" ["2"] "\\.hs$"
-             , processJob "hlint" ["src"] "\\.hs$"
-             , processJob "sh" ["run-tests"] "\\.hs$"
+createJobs = [ processJob "job1" "ls" [] "Main.hs"
+             , processJob "job2" "sleep" ["1"] "\\.hs$"
+             , processJob "job3" "sleep" ["2"] "\\.hs$"
+             , processJob "job4" "hlint" ["src"] "\\.hs$"
+             , processJob "job5" "sh" ["run-tests"] "\\.hs$"
              ]
 
 redraw canvas jobsRef lock event = do
