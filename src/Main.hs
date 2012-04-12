@@ -22,7 +22,7 @@ showMainWindow = do
     lock       <- newEmptyMVar
 
     jobsRef    <- newIORef createJobs
-    timeoutAdd (widgetQueueDraw canvas >> return True) 10
+    timeoutAdd (widgetQueueDraw canvas >> return True) 500
     setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef lock)
 
     mainWindow `onDestroy` mainQuit
