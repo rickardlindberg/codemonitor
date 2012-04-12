@@ -23,7 +23,7 @@ data Thread = Thread
 data Status = Idle | Working | Fail String
 
 fullName :: Job -> String
-fullName (Job { name = name, args = args }) = name ++ " " ++ intercalate " " args
+fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
 
 isFailed :: Job -> Bool
 isFailed (Job { status = Fail _ }) = True
