@@ -56,14 +56,12 @@ updateJobsRef :: FilePath -> IORef [Job] -> MVar () -> IO ()
 updateJobsRef changedFile jobsRef lock = do
     putMVar lock ()
     jobs <- readIORef jobsRef
-    newJobs <- updateJobs changedFile (updateJobRef jobsRef lock) jobs
+    newJobs <- reRunJobs changedFile updateJobRef jobs
     writeIORef jobsRef newJobs
     takeMVar lock
-
-updateJobRef :: IORef [Job] -> MVar () -> String -> Status -> IO ()
-updateJobRef jobsRef lock id status = do
-    putMVar lock ()
-    jobs <- readIORef jobsRef
-    let newJobs = updateJob id status jobs
-    writeIORef jobsRef newJobs
-    takeMVar lock
+    where
+        updateJobRef id status = do
+            putMVar lock ()
+            jobs <- readIORef jobsRef
+            writeIORef jobsRef (updateJobStatus id status jobs)
+            takeMVar lock

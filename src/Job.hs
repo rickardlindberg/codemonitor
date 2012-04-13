@@ -26,24 +26,17 @@ isFailed _ = False
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
 
-updateJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
-updateJobs file signalResult = mapM updateJob
+reRunJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
+reRunJobs fileChanged signalResult = mapM reRunJob
     where
-        updateJob job =
-            if shouldStartThread job file
+        reRunJob job =
+            if shouldStartThread job fileChanged
                 then do
                     cancel job
                     threadId <- forkIO $ runThread job signalResult
                     return $ job { thread = Just threadId, status = Working }
                 else
                     return job
-
-updateJob :: String -> Status -> [Job] -> [Job]
-updateJob theId status jobs = map updateJobInner jobs
-    where
-        updateJobInner job
-            | jobId job == theId = job { status = status, thread = Nothing }
-            | otherwise          = job
 
 shouldStartThread :: Job -> FilePath -> Bool
 shouldStartThread job f = f =~ matchExpr job
@@ -58,3 +51,10 @@ runThread job signalResult = do
     if exit == ExitSuccess
         then signalResult (jobId job) Idle
         else signalResult (jobId job) (Fail $ stderr ++ stdout)
+
+updateJobStatus :: String -> Status -> [Job] -> [Job]
+updateJobStatus theId status jobs = map updateJobInner jobs
+    where
+        updateJobInner job
+            | jobId job == theId = job { status = status, thread = Nothing }
+            | otherwise          = job
