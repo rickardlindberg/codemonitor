@@ -11,12 +11,7 @@ data Job = Job
     , args :: [String]
     , matchExpr :: String
     , status :: Status
-    , thread :: Maybe Thread
-    }
-
-data Thread = Thread
-    { threadId :: ThreadId
-    , result :: MVar Status
+    , thread :: Maybe ThreadId
     }
 
 data Status = Idle | Working | Fail String
@@ -31,37 +26,35 @@ isFailed _ = False
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
 
-updateJobs :: Maybe FilePath -> [Job] -> IO [Job]
-updateJobs file = mapM updateJob
+updateJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
+updateJobs file signalResult = mapM updateJob
     where
         updateJob job =
             if shouldStartThread job file
                 then do
                     cancel job
-                    mvar <- newEmptyMVar
-                    threadId <- forkIO $ runThread job mvar
-                    return $ job { thread = Just (Thread threadId mvar), status = Working }
-                else do
-                    value <- tryGetNewStatus job
-                    case value of
-                        Nothing -> return job
-                        Just s  -> return $ job { thread = Nothing, status = s }
+                    threadId <- forkIO $ runThread job signalResult
+                    return $ job { thread = Just threadId, status = Working }
+                else
+                    return job
 
-shouldStartThread :: Job -> Maybe FilePath -> Bool
-shouldStartThread job (Just f) = f =~ matchExpr job
-shouldStartThread _ _ = False
+updateJob :: String -> Status -> [Job] -> [Job]
+updateJob theId status jobs = map updateJobInner jobs
+    where
+        updateJobInner job
+            | jobId job == theId = job { status = status, thread = Nothing }
+            | otherwise          = job
+
+shouldStartThread :: Job -> FilePath -> Bool
+shouldStartThread job f = f =~ matchExpr job
 
 cancel :: Job -> IO ()
-cancel Job { thread = Just (Thread { threadId = id }) } = killThread id
+cancel Job { thread = Just id } = killThread id
 cancel _ = return ()
 
-runThread :: Job -> MVar Status -> IO ()
-runThread job result = do
+runThread :: Job -> (String -> Status -> IO ()) -> IO ()
+runThread job signalResult = do
     (exit, stdout, stderr) <- readProcessWithExitCode (name job) (args job) ""
     if exit == ExitSuccess
-        then putMVar result Idle
-        else putMVar result (Fail $ stderr ++ stdout)
-    return ()
-
-tryGetNewStatus Job { thread = Just (Thread { result = result }) } = tryTakeMVar result
-tryGetNewStatus _ = return Nothing
+        then signalResult (jobId job) Idle
+        else signalResult (jobId job) (Fail $ stderr ++ stdout)

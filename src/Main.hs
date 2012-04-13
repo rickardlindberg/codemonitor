@@ -23,7 +23,7 @@ showMainWindow = do
 
     jobsRef    <- newIORef createJobs
     timeoutAdd (widgetQueueDraw canvas >> return True) 500
-    setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef lock)
+    setupNotifications "src" (\a -> updateJobsRef a jobsRef lock)
 
     mainWindow `onDestroy` mainQuit
     canvas     `onExpose`  redraw canvas jobsRef lock
@@ -46,17 +46,24 @@ createJobs = [ processJob "job1" "ls" [] "Main.hs"
              ]
 
 redraw canvas jobsRef lock event = do
-    updateJobsRef Nothing jobsRef lock
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
     renderWithDrawable drawin (renderScreen jobs (fromIntegral w) (fromIntegral h))
     return True
 
-updateJobsRef :: Maybe FilePath -> IORef [Job] -> MVar () -> IO ()
+updateJobsRef :: FilePath -> IORef [Job] -> MVar () -> IO ()
 updateJobsRef changedFile jobsRef lock = do
     putMVar lock ()
     jobs <- readIORef jobsRef
-    newJobs <- updateJobs changedFile jobs
+    newJobs <- updateJobs changedFile (updateJobRef jobsRef lock) jobs
+    writeIORef jobsRef newJobs
+    takeMVar lock
+
+updateJobRef :: IORef [Job] -> MVar () -> String -> Status -> IO ()
+updateJobRef jobsRef lock id status = do
+    putMVar lock ()
+    jobs <- readIORef jobsRef
+    let newJobs = updateJob id status jobs
     writeIORef jobsRef newJobs
     takeMVar lock
