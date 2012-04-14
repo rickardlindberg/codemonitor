@@ -30,7 +30,7 @@ reRunJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
 reRunJobs fileChanged signalResult = mapM reRunJob
     where
         reRunJob job =
-            if shouldStartThread job fileChanged
+            if fileChanged =~ matchExpr job
                 then do
                     cancel job
                     -- signalResult must be called asynchronoulsy, otherwise
@@ -39,9 +39,6 @@ reRunJobs fileChanged signalResult = mapM reRunJob
                     return $ job { thread = Just threadId, status = Working }
                 else
                     return job
-
-shouldStartThread :: Job -> FilePath -> Bool
-shouldStartThread job f = f =~ matchExpr job
 
 cancel :: Job -> IO ()
 cancel Job { thread = Just id } = killThread id
