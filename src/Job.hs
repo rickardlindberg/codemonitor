@@ -26,19 +26,24 @@ isFailed _ = False
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
 
+runAllJobs :: (String -> Status -> IO ()) -> [Job] -> IO [Job]
+runAllJobs signalResult = mapM (reRunJob signalResult)
+
 reRunJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
-reRunJobs fileChanged signalResult = mapM reRunJob
+reRunJobs fileChanged signalResult = mapM reRunIfMatch
     where
-        reRunJob job =
+        reRunIfMatch job =
             if fileChanged =~ matchExpr job
-                then do
-                    cancel job
-                    -- signalResult must be called asynchronoulsy, otherwise
-                    -- the lock for jobsRef will deadlock.
-                    threadId <- forkIO $ runThread job signalResult
-                    return $ job { thread = Just threadId, status = Working }
-                else
-                    return job
+                then reRunJob signalResult job
+                else return job
+
+reRunJob :: (String -> Status -> IO ()) -> Job -> IO Job
+reRunJob signalResult job = do
+    cancel job
+    -- signalResult must be called asynchronoulsy, otherwise
+    -- the lock for jobsRef will deadlock.
+    threadId <- forkIO $ runThread job signalResult
+    return $ job { thread = Just threadId, status = Working }
 
 cancel :: Job -> IO ()
 cancel Job { thread = Just id } = killThread id
