@@ -33,6 +33,8 @@ reRunJobs fileChanged signalResult = mapM reRunJob
             if shouldStartThread job fileChanged
                 then do
                     cancel job
+                    -- signalResult must be called asynchronoulsy, otherwise
+                    -- the lock for jobsRef will deadlock.
                     threadId <- forkIO $ runThread job signalResult
                     return $ job { thread = Just threadId, status = Working }
                 else
