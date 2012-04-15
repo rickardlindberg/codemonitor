@@ -40,8 +40,8 @@ reRunJobs fileChanged signalResult = mapM reRunIfMatch
 reRunJob :: (String -> Status -> IO ()) -> Job -> IO Job
 reRunJob signalResult job = do
     cancel job
-    -- signalResult must be called asynchronoulsy, otherwise
-    -- the lock for jobsRef will deadlock.
+    -- NOTE: signalResult must be called asynchronoulsy, otherwise the lock for
+    -- jobsRef will deadlock.
     threadId <- forkIO $ runThread job signalResult
     return $ job { thread = Just threadId, status = Working }
 
@@ -51,6 +51,8 @@ cancel _ = return ()
 
 runThread :: Job -> (String -> Status -> IO ()) -> IO ()
 runThread job signalResult = do
+    -- NOTE: Is the process killed if this thread is killed? If not, is that
+    -- the reason why we get resource exhaustion sometimes?
     (exit, stdout, stderr) <- readProcessWithExitCode (name job) (args job) ""
     if exit == ExitSuccess
         then signalResult (jobId job) Idle

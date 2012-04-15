@@ -5,6 +5,7 @@ import System.INotify
 setupNotifications :: FilePath -> (String -> IO ()) -> IO ()
 setupNotifications dir notifyFileChanged = do
     i <- initINotify
+    -- NOTE: This will only watch one directory. Must setup recursive watch.
     addWatch i [Modify, MoveIn, MoveOut] dir handle
     return ()
     where
