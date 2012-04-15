@@ -31,10 +31,6 @@ data Status = Idle | Working | Fail String
 fullName :: Job -> String
 fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
 
-isFailed :: Job -> Bool
-isFailed (Job { status = Fail _ }) = True
-isFailed _                         = False
-
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
 

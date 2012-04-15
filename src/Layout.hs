@@ -1,17 +1,18 @@
 module Layout where
 
 import Job
+import Monitor
 import Rect
 
-findRects :: Rect -> [Job] -> [Rect]
-findRects rect jobs =
-    if any isFailed jobs then
+findRects :: Rect -> [Monitor] -> [Rect]
+findRects rect monitors =
+    if any isFailed monitors then
         let (top, bottom) = divideVertical rect 0.9
-            tops = splitVertical top (count isFailed jobs)
-            bottoms = splitHorizontal bottom (count (not . isFailed) jobs)
-        in match tops bottoms jobs
+            tops = splitVertical top (count isFailed monitors)
+            bottoms = splitHorizontal bottom (count (not . isFailed) monitors)
+        in match tops bottoms monitors
     else
-        splitVertical rect (length jobs)
+        splitVertical rect (length monitors)
 
 match [] [] [] = []
 match tops bottoms (j:js) =
@@ -21,3 +22,8 @@ match tops bottoms (j:js) =
         head bottoms:match tops (tail bottoms) js
 
 count x y = length (filter x y)
+
+isFailed :: Monitor -> Bool
+isFailed (JobMonitor _ (Fail _)) = True
+isFailed _                       = False
+

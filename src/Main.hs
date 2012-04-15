@@ -4,6 +4,7 @@ import Control.Concurrent
 import Data.IORef
 import Graphics.UI.Gtk
 import Job
+import Monitor
 import Notifier
 import Render
 
@@ -53,7 +54,13 @@ redraw canvas jobsRef lock event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
-    renderWithDrawable drawin (renderScreen jobs (fromIntegral w) (fromIntegral h))
+    let monitors = [ JobMonitor (fullName (jobWithId jobs "job1")) (status (jobWithId jobs "job1"))
+                   , JobMonitor (fullName (jobWithId jobs "job2")) (status (jobWithId jobs "job2"))
+                   , JobMonitor (fullName (jobWithId jobs "job3")) (status (jobWithId jobs "job3"))
+                   , JobMonitor (fullName (jobWithId jobs "job4")) (status (jobWithId jobs "job4"))
+                   , JobMonitor (fullName (jobWithId jobs "job5")) (status (jobWithId jobs "job5"))
+                   ]
+    renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
 
 updateJobsRef :: Maybe FilePath -> IORef Jobs -> IO () -> MVar () -> IO ()
