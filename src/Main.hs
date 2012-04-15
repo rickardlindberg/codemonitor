@@ -20,11 +20,13 @@ showMainWindow = do
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
 
     lock       <- newEmptyMVar
-
     jobsRef    <- newIORef createJobs
-    timeoutAdd (widgetQueueDraw canvas >> return True) 500
-    setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef lock)
-    updateJobsRef Nothing jobsRef lock
+
+    let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
+    setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef forceRedraw lock)
+    updateJobsRef Nothing jobsRef forceRedraw lock
+
+    timeoutAddFull (yield >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
     canvas     `onExpose`  redraw canvas jobsRef lock
@@ -53,8 +55,8 @@ redraw canvas jobsRef lock event = do
     renderWithDrawable drawin (renderScreen jobs (fromIntegral w) (fromIntegral h))
     return True
 
-updateJobsRef :: Maybe FilePath -> IORef [Job] -> MVar () -> IO ()
-updateJobsRef changedFile jobsRef lock = do
+updateJobsRef :: Maybe FilePath -> IORef [Job] -> IO () -> MVar () -> IO ()
+updateJobsRef changedFile jobsRef forceRedraw lock = do
     putMVar lock ()
     jobs <- readIORef jobsRef
     newJobs <- case changedFile of
@@ -62,9 +64,11 @@ updateJobsRef changedFile jobsRef lock = do
                  Nothing -> runAllJobs updateJobRef jobs
     writeIORef jobsRef newJobs
     takeMVar lock
+    forceRedraw
     where
         updateJobRef id status = do
             putMVar lock ()
             jobs <- readIORef jobsRef
             writeIORef jobsRef (updateJobStatus id status jobs)
             takeMVar lock
+            forceRedraw
