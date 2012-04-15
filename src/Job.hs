@@ -6,12 +6,12 @@ import System.Process
 import Text.Regex.Posix
 
 data Job = Job
-    { jobId :: String
-    , name :: String
-    , args :: [String]
+    { jobId     :: String
+    , name      :: String
+    , args      :: [String]
     , matchExpr :: String
-    , status :: Status
-    , thread :: Maybe ThreadId
+    , status    :: Status
+    , thread    :: Maybe ThreadId
     }
 
 data Status = Idle | Working | Fail String
@@ -21,7 +21,7 @@ fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
 
 isFailed :: Job -> Bool
 isFailed (Job { status = Fail _ }) = True
-isFailed _ = False
+isFailed _                         = False
 
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
@@ -47,7 +47,7 @@ reRunJob signalResult job = do
 
 cancel :: Job -> IO ()
 cancel Job { thread = Just id } = killThread id
-cancel _ = return ()
+cancel _                        = return ()
 
 runThread :: Job -> (String -> Status -> IO ()) -> IO ()
 runThread job signalResult = do
