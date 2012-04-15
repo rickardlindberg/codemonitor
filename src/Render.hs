@@ -6,10 +6,10 @@ import Job
 import Layout
 import Rect
 
-renderScreen :: [Job] -> Double -> Double -> Render ()
+renderScreen :: Jobs -> Double -> Double -> Render ()
 renderScreen jobs w h = do
     renderBackground
-    renderJobs jobs (shrink 0.25 $ Rect 0 0 w h)
+    renderJobs (map (jobWithId jobs) ["job1", "job2", "job3", "job4", "job5"]) (shrink 0.25 $ Rect 0 0 w h)
 
 renderBackground :: Render ()
 renderBackground = do

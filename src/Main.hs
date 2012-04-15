@@ -20,7 +20,7 @@ showMainWindow = do
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
 
     lock       <- newEmptyMVar
-    jobsRef    <- newIORef createJobs
+    jobsRef    <- newIORef createJobsFromDefinitions
 
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
     setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef forceRedraw lock)
@@ -40,13 +40,14 @@ builderFromFile path = do
     builderAddFromFile builder path
     return builder
 
-createJobs :: [Job]
-createJobs = [ processJob "job1" "ls" [] "Main.hs"
-             , processJob "job2" "sleep" ["1"] "\\.hs$"
-             , processJob "job3" "sleep" ["2"] "\\.hs$"
-             , processJob "job4" "hlint" ["src"] "\\.hs$"
-             , processJob "job5" "sh" ["run-tests"] "\\.hs$"
-             ]
+createJobsFromDefinitions :: Jobs
+createJobsFromDefinitions = createJobs
+    [ processJob "job1" "ls" [] "Main.hs"
+    , processJob "job2" "sleep" ["1"] "\\.hs$"
+    , processJob "job3" "sleep" ["2"] "\\.hs$"
+    , processJob "job4" "hlint" ["src"] "\\.hs$"
+    , processJob "job5" "sh" ["run-tests"] "\\.hs$"
+    ]
 
 redraw canvas jobsRef lock event = do
     (w, h) <- widgetGetSize canvas
@@ -55,7 +56,7 @@ redraw canvas jobsRef lock event = do
     renderWithDrawable drawin (renderScreen jobs (fromIntegral w) (fromIntegral h))
     return True
 
-updateJobsRef :: Maybe FilePath -> IORef [Job] -> IO () -> MVar () -> IO ()
+updateJobsRef :: Maybe FilePath -> IORef Jobs -> IO () -> MVar () -> IO ()
 updateJobsRef changedFile jobsRef forceRedraw lock = do
     putMVar lock ()
     jobs <- readIORef jobsRef

@@ -5,6 +5,18 @@ import System.Exit
 import System.Process
 import Text.Regex.Posix
 
+data Jobs = Jobs [Job]
+
+createJobs :: [Job] -> Jobs
+createJobs = Jobs
+
+jobWithId :: Jobs -> String -> Job
+jobWithId (Jobs jobs) id = find jobs
+    where
+        find [] = error "gaaah"
+        find (x:xs) | jobId x == id = x
+                    | otherwise     = find xs
+
 data Job = Job
     { jobId     :: String
     , name      :: String
@@ -26,11 +38,11 @@ isFailed _                         = False
 processJob :: String -> String -> [String] -> String -> Job
 processJob jobId name args expr = Job jobId name args expr Idle Nothing
 
-runAllJobs :: (String -> Status -> IO ()) -> [Job] -> IO [Job]
-runAllJobs signalResult = mapM (reRunJob signalResult)
+runAllJobs :: (String -> Status -> IO ()) -> Jobs -> IO Jobs
+runAllJobs signalResult (Jobs jobs) = fmap Jobs (mapM (reRunJob signalResult) jobs)
 
-reRunJobs :: FilePath -> (String -> Status -> IO ()) -> [Job] -> IO [Job]
-reRunJobs fileChanged signalResult = mapM reRunIfMatch
+reRunJobs :: FilePath -> (String -> Status -> IO ()) -> Jobs -> IO Jobs
+reRunJobs fileChanged signalResult (Jobs jobs) = fmap Jobs (mapM reRunIfMatch jobs)
     where
         reRunIfMatch job =
             if fileChanged =~ matchExpr job
@@ -58,8 +70,8 @@ runThread job signalResult = do
         then signalResult (jobId job) Idle
         else signalResult (jobId job) (Fail $ stderr ++ stdout)
 
-updateJobStatus :: String -> Status -> [Job] -> [Job]
-updateJobStatus theId status jobs = map updateJobInner jobs
+updateJobStatus :: String -> Status -> Jobs -> Jobs
+updateJobStatus theId status (Jobs jobs) = Jobs (map updateJobInner jobs)
     where
         updateJobInner job
             | jobId job == theId = job { status = status, thread = Nothing }
