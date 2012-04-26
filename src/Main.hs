@@ -69,7 +69,7 @@ redraw canvas jobsRef monitorsRef event = do
 
 updateMonitors jobs monitors = map updateMonitor monitors
     where
-        updateMonitor (JobMonitor id _ _) = JobMonitor id (fullName (jobWithId jobs id)) (status (jobWithId jobs id))
+        updateMonitor (JobMonitor { mJobId = id }) = JobMonitor id (fullName (jobWithId jobs id)) (status (jobWithId jobs id))
 
 createWithJobLock :: MVar () -> IORef Jobs -> (Jobs -> IO Jobs) -> IO ()
 createWithJobLock lock jobsRef fn = do
