@@ -23,7 +23,7 @@ renderJobs monitors rect = do
     forM_ (zip monitors rects) renderJob
 
 renderJob :: (Monitor, Rect) -> Render ()
-renderJob (JobMonitor name status, Rect x y w h) = do
+renderJob (JobMonitor id name status, Rect x y w h) = do
     newPath
     let (r, g, b, a) = color status
     setSourceRGBA r g b a

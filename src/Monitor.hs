@@ -2,4 +2,4 @@ module Monitor where
 
 import Job
 
-data Monitor = JobMonitor String Status
+data Monitor = JobMonitor String String Status

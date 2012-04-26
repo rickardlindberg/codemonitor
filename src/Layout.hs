@@ -24,6 +24,6 @@ match tops bottoms (j:js) =
 count x y = length (filter x y)
 
 isFailed :: Monitor -> Bool
-isFailed (JobMonitor _ (Fail _)) = True
-isFailed _                       = False
+isFailed (JobMonitor _ _ (Fail _)) = True
+isFailed _                         = False
 

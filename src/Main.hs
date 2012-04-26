@@ -25,13 +25,20 @@ showMainWindow = do
     jobsRef <- newIORef createJobsFromDefinitions
     let withJobLock = createWithJobLock lock jobsRef
 
+    monitorsRef <- newIORef [ JobMonitor "job1" "" Idle
+                            , JobMonitor "job2" "" Idle
+                            , JobMonitor "job3" "" Idle
+                            , JobMonitor "job4" "" Idle
+                            , JobMonitor "job5" "" Idle
+                            ]
+
     setupNotifications "src" (onFileChanged withJobLock forceRedraw)
     onInit withJobLock forceRedraw
 
     timeoutAddFull (yield >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas jobsRef
+    canvas     `onExpose`  redraw canvas jobsRef monitorsRef
 
     widgetShowAll mainWindow
     return ()
@@ -51,18 +58,18 @@ createJobsFromDefinitions = createJobs
     , processJob "job5" "sh" ["run-tests"] "\\.hs$"
     ]
 
-redraw canvas jobsRef event = do
+redraw canvas jobsRef monitorsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
-    let monitors = [ JobMonitor (fullName (jobWithId jobs "job1")) (status (jobWithId jobs "job1"))
-                   , JobMonitor (fullName (jobWithId jobs "job2")) (status (jobWithId jobs "job2"))
-                   , JobMonitor (fullName (jobWithId jobs "job3")) (status (jobWithId jobs "job3"))
-                   , JobMonitor (fullName (jobWithId jobs "job4")) (status (jobWithId jobs "job4"))
-                   , JobMonitor (fullName (jobWithId jobs "job5")) (status (jobWithId jobs "job5"))
-                   ]
+    modifyIORef monitorsRef (updateMonitors jobs)
+    monitors <- readIORef monitorsRef
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
+
+updateMonitors jobs monitors = map updateMonitor monitors
+    where
+        updateMonitor (JobMonitor id _ _) = JobMonitor id (fullName (jobWithId jobs id)) (status (jobWithId jobs id))
 
 createWithJobLock :: MVar () -> IORef Jobs -> (Jobs -> IO Jobs) -> IO ()
 createWithJobLock lock jobsRef fn = do
