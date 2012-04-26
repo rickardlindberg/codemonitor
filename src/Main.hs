@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Config
 import Control.Concurrent
 import Data.IORef
 import Data.Time.Clock
@@ -22,17 +23,13 @@ showMainWindow = do
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
+    (jobs, monitors) <- create "monitor.config"
+
     lock <- newEmptyMVar
-    jobsRef <- newIORef createJobsFromDefinitions
+    jobsRef <- newIORef jobs
     let withJobLock = createWithJobLock lock jobsRef
 
-    monitorsRef <- newIORef [ JobMonitor "job1" 0 "" Idle
-                            , JobMonitor "job2" 0 "" Idle
-                            , JobMonitor "job3" 0 "" Idle
-                            , JobMonitor "job4" 0 "" Idle
-                            , JobMonitor "job5" 0 "" Idle
-                            ]
-
+    monitorsRef <- newIORef monitors
 
     t <- getCurrentTime
     timeRef <- newIORef t
@@ -53,15 +50,6 @@ builderFromFile path = do
     builder <- builderNew
     builderAddFromFile builder path
     return builder
-
-createJobsFromDefinitions :: Jobs
-createJobsFromDefinitions = createJobs
-    [ processJob "job1" "ls" [] "Main.hs"
-    , processJob "job2" "sleep" ["1"] "\\.hs$"
-    , processJob "job3" "sleep" ["2"] "\\.hs$"
-    , processJob "job4" "hlint" ["src"] "\\.hs$"
-    , processJob "job5" "sh" ["run-tests"] "\\.hs$"
-    ]
 
 redraw canvas timeRef jobsRef monitorsRef event = do
     oldT <- readIORef timeRef
