@@ -19,18 +19,19 @@ showMainWindow = do
     builder    <- builderFromFile "interface.glade"
     mainWindow <- builderGetObject builder castToWindow "main_window"
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
-
-    lock       <- newEmptyMVar
-    jobsRef    <- newIORef createJobsFromDefinitions
-
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
-    setupNotifications "src" (\a -> updateJobsRef (Just a) jobsRef forceRedraw lock)
-    updateJobsRef Nothing jobsRef forceRedraw lock
+
+    lock <- newEmptyMVar
+    jobsRef <- newIORef createJobsFromDefinitions
+    let withJobLock = createWithJobLock lock jobsRef
+
+    setupNotifications "src" (onFileChanged withJobLock forceRedraw)
+    onInit withJobLock forceRedraw
 
     timeoutAddFull (yield >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas jobsRef lock
+    canvas     `onExpose`  redraw canvas jobsRef
 
     widgetShowAll mainWindow
     return ()
@@ -50,7 +51,7 @@ createJobsFromDefinitions = createJobs
     , processJob "job5" "sh" ["run-tests"] "\\.hs$"
     ]
 
-redraw canvas jobsRef lock event = do
+redraw canvas jobsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
@@ -63,20 +64,25 @@ redraw canvas jobsRef lock event = do
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
 
-updateJobsRef :: Maybe FilePath -> IORef Jobs -> IO () -> MVar () -> IO ()
-updateJobsRef changedFile jobsRef forceRedraw lock = do
+createWithJobLock :: MVar () -> IORef Jobs -> (Jobs -> IO Jobs) -> IO ()
+createWithJobLock lock jobsRef fn = do
     putMVar lock ()
     jobs <- readIORef jobsRef
-    newJobs <- case changedFile of
-                 Just f  -> reRunJobs f updateJobRef jobs
-                 Nothing -> runAllJobs updateJobRef jobs
+    newJobs <- fn jobs
     writeIORef jobsRef newJobs
     takeMVar lock
+
+onInit :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> IO ()
+onInit withJobLock forceRedraw = do
+    withJobLock $ runAllJobs (onStatusChanged withJobLock forceRedraw)
     forceRedraw
-    where
-        updateJobRef id status = do
-            putMVar lock ()
-            jobs <- readIORef jobsRef
-            writeIORef jobsRef (updateJobStatus id status jobs)
-            takeMVar lock
-            forceRedraw
+
+onFileChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> FilePath -> IO ()
+onFileChanged withJobLock forceRedraw filePath = do
+    withJobLock (reRunJobs filePath (onStatusChanged withJobLock forceRedraw))
+    forceRedraw
+
+onStatusChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> String -> Status -> IO ()
+onStatusChanged withJobLock forceRedraw id status = do
+    withJobLock (return . updateJobStatus id status)
+    forceRedraw
