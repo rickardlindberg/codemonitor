@@ -26,7 +26,7 @@ data Job = Job
     , thread    :: Maybe ThreadId
     }
 
-data Status = Idle | Working | Fail String
+data Status = Idle | Working | Fail String deriving (Eq)
 
 fullName :: Job -> String
 fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args

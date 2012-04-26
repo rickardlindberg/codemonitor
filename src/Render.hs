@@ -23,9 +23,9 @@ renderJobs monitors rect = do
     forM_ (zip monitors rects) renderJob
 
 renderJob :: (Monitor, Rect) -> Render ()
-renderJob (JobMonitor { mJobName = name, mJobStatus = status }, Rect x y w h) = do
+renderJob (JobMonitor { mJobName = name, mJobStatus = status, mTimeInState = t }, Rect x y w h) = do
     newPath
-    let (r, g, b, a) = color status
+    let (r, g, b, a) = color t status
     setSourceRGBA r g b a
     rectangle x y w h
     fill
@@ -41,10 +41,22 @@ renderJob (JobMonitor { mJobName = name, mJobStatus = status }, Rect x y w h) = 
         showText e
     return ()
 
-color :: Status -> (Double, Double, Double, Double)
-color Idle     = (0, 1, 0, 1)
-color Working  = (0, 1, 1, 1)
-color (Fail _) = (1, 0, 0, 1)
+circularMovement :: Double -> Double -> Double -> Double -> Double
+circularMovement start end animationTime totalTime = res
+    where
+        rest    = totalTime - animationTime * fromIntegral (floor $ totalTime / animationTime)
+        percent = rest / animationTime
+        d1      = end - start
+        d2      = start - end
+        p2      = percent * 2
+        res     = if p2 <= 1
+                      then start + d1 * percent
+                      else end   + d2 * percent
+
+color :: Double -> Status -> (Double, Double, Double, Double)
+color t Idle     = (0, 1, 0, 1)
+color t Working  = (0, 1, 1, circularMovement 1 0.5 2 t)
+color t (Fail _) = (1, 0, 0, circularMovement 1 0.5 0.5 t)
 
 errorText :: Status -> [String]
 errorText (Fail s) = lines s
