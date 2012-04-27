@@ -23,7 +23,7 @@ showMainWindow = do
     canvas     <- builderGetObject builder castToDrawingArea "canvas"
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
-    (jobs, monitors) <- create "monitor.config"
+    (watchDir, jobs, monitors) <- create "monitor.config"
 
     lock <- newEmptyMVar
     jobsRef <- newIORef jobs
@@ -34,7 +34,7 @@ showMainWindow = do
     t <- getCurrentTime
     timeRef <- newIORef t
 
-    setupNotifications "src" (onFileChanged withJobLock forceRedraw)
+    setupNotifications watchDir (onFileChanged withJobLock forceRedraw)
     onInit withJobLock forceRedraw
 
     timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 10

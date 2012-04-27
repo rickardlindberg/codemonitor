@@ -3,12 +3,13 @@ module Config where
 import Job
 import Monitor
 
-create :: FilePath -> IO (Jobs, [Monitor])
+create :: FilePath -> IO (String, Jobs, [Monitor])
 create configPath = do
     content <- readFile configPath
-    let jobs = map jobDefToJob (lines content)
+    let (watchDir:rest) = lines content
+    let jobs = map jobDefToJob rest
     let monitors = map jobToMonitor jobs
-    return (createJobs jobs, monitors)
+    return (watchDir, createJobs jobs, monitors)
 
 jobDefToJob :: String -> Job
 jobDefToJob def =
