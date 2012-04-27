@@ -65,19 +65,6 @@ redraw canvas timeRef jobsRef monitorsRef event = do
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
 
-updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
-updateMonitors d jobs = map updateMonitor
-    where
-        updateMonitor monitor@(JobMonitor { mJobId = id, mJobStatus = currentStatus, mTimeInState = dd }) =
-            let newName    = fullName $ jobWithId jobs id
-                newStatus  = status   $ jobWithId jobs id
-                newMonitor = monitor { mJobName   = newName
-                                     , mJobStatus = newStatus
-                                     }
-            in if currentStatus == newStatus
-                then newMonitor { mTimeInState = d + dd }
-                else newMonitor { mTimeInState = 0 }
-
 createWithJobLock :: MVar () -> IORef Jobs -> (Jobs -> IO Jobs) -> IO ()
 createWithJobLock lock jobsRef fn = do
     putMVar lock ()
