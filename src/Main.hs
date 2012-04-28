@@ -9,6 +9,7 @@ import Job
 import Monitor
 import Notifier
 import Render
+import System
 
 main :: IO ()
 main = do
@@ -24,7 +25,8 @@ showMainWindow = do
 
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
-    (watchDir, jobs, monitors) <- create "monitor.config"
+    args <- getArgs
+    (watchDir, jobs, monitors) <- create (head args)
 
     lock <- newEmptyMVar
     jobsRef <- newIORef jobs

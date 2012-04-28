@@ -1,2 +1,2 @@
 #!/bin/sh
-./compile-app && ./src/Main
+./compile-app && ./src/Main monitor.config
