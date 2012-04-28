@@ -1,13 +1,27 @@
 module Notifier where
 
+import Control.Monad
+import System.Directory
+import System.FilePath
 import System.INotify
 
 setupNotifications :: FilePath -> (String -> IO ()) -> IO ()
 setupNotifications dir notifyFileChanged = do
     i <- initINotify
-    -- NOTE: This will only watch one directory. Must setup recursive watch.
-    addWatch i [Modify, MoveIn, MoveOut] dir handle
-    return ()
+    allDirs <- getDirsRecursive dir
+    forM_ allDirs $ \dir ->
+        addWatch i [Modify, MoveIn, MoveOut] dir handle
     where
         handle (Modified _ (Just f)) = notifyFileChanged f
         handle _                     = return ()
+
+getDirsRecursive :: FilePath -> IO [FilePath]
+getDirsRecursive rootDir = do
+    contents  <- getDirectoryContents rootDir
+    innerDirs <- forM (filter (`notElem` [".", ".."]) contents) $ \path -> do
+        let fullPath = rootDir </> path
+        isDirectory <- doesDirectoryExist fullPath
+        if isDirectory
+            then getDirsRecursive fullPath
+            else return []
+    return $ rootDir:concat innerDirs
