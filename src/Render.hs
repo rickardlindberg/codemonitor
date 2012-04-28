@@ -7,39 +7,61 @@ import Layout
 import Monitor
 import Rect
 
+boxRadius = 10.0
+innerSpace = 2
+outerSpace = innerSpace/2
+fontName = "Monospace"
+fontSize = 11.0
+
 renderScreen :: [Monitor] -> Double -> Double -> Render ()
 renderScreen monitors w h = do
     renderBackground
-    renderJobs monitors (shrink 0.25 $ Rect 0 0 w h)
+    renderMonitors monitors (shrink outerSpace $ Rect 0 0 w h)
 
 renderBackground :: Render ()
 renderBackground = do
-    setSourceRGB 1 1 1
+    setSourceRGB 1 1 0.6
     paint
 
-renderJobs :: [Monitor] -> Rect -> Render ()
-renderJobs monitors rect = do
-    let rects = map (shrink 0.5) (findRects rect monitors)
-    forM_ (zip monitors rects) renderJob
+renderMonitors :: [Monitor] -> Rect -> Render ()
+renderMonitors monitors rect = do
+    let rects = map (shrink innerSpace) (findRects rect monitors)
+    forM_ (zip monitors rects) renderMonitor
 
-renderJob :: (Monitor, Rect) -> Render ()
-renderJob (JobMonitor { mJobName = name, mJobStatus = status, mSecondsInState = t }, Rect x y w h) = do
-    newPath
-    let (r, g, b, a) = color t status
+renderMonitor :: (Monitor, Rect) -> Render ()
+renderMonitor (monitor@JobMonitor {}, rect@(Rect x y w h)) = do
+    -- Background
+    let (r, g, b, a) = statusToBgColor (mSecondsInState monitor) (mJobStatus monitor)
     setSourceRGBA r g b a
-    rectangle x y w h
-    fill
-
-    setSourceRGBA 0 0 0 1
+    roundRectPath rect
+    fillPreserve
+    setSourceRGBA 0 0 0 0.4
+    setLineWidth 1.5
+    stroke
+    -- Title
+    selectFontFace fontName FontSlantNormal FontWeightBold
+    setFontSize fontSize
+    setSourceRGBA 0 0 0 0.7
+    ex <- textExtents (mJobName monitor)
+    moveTo (x + boxRadius - textExtentsXbearing ex) (y + boxRadius - textExtentsYbearing ex)
+    showText (mJobName monitor)
+    -- Additional text
+    selectFontFace fontName FontSlantNormal FontWeightNormal
+    setFontSize fontSize
+    setSourceRGBA 0 0 0 0.8
     moveTo (x + 10) (y+20)
-    showText name
-
-    let errors = errorText status
-    let ys = map (\x -> fromIntegral x*10 + y + 20) [1..length errors]
+    ex2 <- fontExtents
+    let errors = additionalLines (mJobStatus monitor)
+    let ys = map (\x -> fromIntegral x*fontExtentsHeight ex2 + y + boxRadius + 2*textExtentsHeight ex) [1..length errors]
     forM_ (zip errors ys) $ \(e, y) -> do
-        moveTo (x + 20) y
+        moveTo (x + boxRadius + boxRadius) y
         showText e
     return ()
+
+statusToBgColor :: Double -> Status -> (Double, Double, Double, Double)
+statusToBgColor t Idle     = (121/255, 245/255, 0, 1)
+statusToBgColor t Working  = (0, 204/255, 245/255, circularMovement 1 0.5 2 t)
+statusToBgColor t (Fail _) = (245/255, 36/255, 0, circularMovement 1 0.7 0.5 t)
 
 circularMovement :: Double -> Double -> Double -> Double -> Double
 circularMovement start end animationTime totalTime = res
@@ -53,11 +75,15 @@ circularMovement start end animationTime totalTime = res
                       then start + d1 * percent
                       else end   + d2 * percent
 
-color :: Double -> Status -> (Double, Double, Double, Double)
-color t Idle     = (0, 1, 0, 1)
-color t Working  = (0, 1, 1, circularMovement 1 0.5 2 t)
-color t (Fail _) = (1, 0, 0, circularMovement 1 0.5 0.5 t)
+roundRectPath :: Rect -> Render ()
+roundRectPath (Rect x y w h) = do
+    newPath
+    arc (x+w-boxRadius) (y+  boxRadius) boxRadius ((-90) * pi/180) (0   * pi/180)
+    arc (x+w-boxRadius) (y+h-boxRadius) boxRadius (0     * pi/180) (90  * pi/180)
+    arc (x+  boxRadius) (y+h-boxRadius) boxRadius (90    * pi/180) (180 * pi/180)
+    arc (x+  boxRadius) (y+  boxRadius) boxRadius (180   * pi/180) (270 * pi/180)
+    closePath
 
-errorText :: Status -> [String]
-errorText (Fail s) = lines s
-errorText _        = []
+additionalLines :: Status -> [String]
+additionalLines (Fail s) = lines s
+additionalLines _        = []
