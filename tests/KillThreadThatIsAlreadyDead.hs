@@ -1,16 +1,16 @@
 import Control.Concurrent
 
 main = do
-    id <- forkIO $ runAThread
+    id <- forkIO runAThread
 
     threadDelay $ 2*1000000
 
-    putStrLn $ "time to kill" ++ (show id)
+    putStrLn $ "time to kill" ++ show id
     killThread id
 
     putStrLn "done"
 
 runAThread = do
-    putStrLn $ "running"
+    putStrLn "running"
     threadDelay $ 1*1000000
-    putStrLn $ "done"
+    putStrLn "done"

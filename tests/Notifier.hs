@@ -44,8 +44,8 @@ assertGotFile filesRef file = do
     file `assertElem` files
 
 assertElem :: String -> [String] -> Assertion
-assertElem item list = do
-    assertBool ("expected item '" ++ item ++ "' to be in " ++ (show list))
+assertElem item list =
+    assertBool ("expected item '" ++ item ++ "' to be in " ++ show list)
                (item `elem` list)
 
 main = runTestTT tests >>= exit
