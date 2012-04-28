@@ -4,15 +4,15 @@ import Job
 import Monitor
 import Rect
 
-findRects :: Rect -> [Monitor] -> [Rect]
+findRects :: Rect -> [Monitor] -> [(Monitor, Rect)]
 findRects rect monitors =
     if any isFailed monitors then
         let (top, bottom) = divideVertical rect 0.9
             tops = splitVertical top (count isFailed monitors)
             bottoms = splitHorizontal bottom (count (not . isFailed) monitors)
-        in match tops bottoms monitors
+        in zip monitors (match tops bottoms monitors)
     else
-        splitVertical rect (length monitors)
+        zip monitors (splitVertical rect (length monitors))
 
 match [] [] [] = []
 match tops bottoms (j:js) =

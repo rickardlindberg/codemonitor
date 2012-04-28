@@ -1,5 +1,6 @@
 module Render where
 
+import Control.Arrow
 import Control.Monad
 import Graphics.Rendering.Cairo hiding (status, Status)
 import Job
@@ -25,8 +26,9 @@ renderBackground = do
 
 renderMonitors :: [Monitor] -> Rect -> Render ()
 renderMonitors monitors rect = do
-    let rects = map (shrink innerSpace) (findRects rect monitors)
-    forM_ (zip monitors rects) renderMonitor
+    let mr       = findRects rect monitors
+    let mrShrunk = map (second $ shrink innerSpace) mr
+    forM_ mrShrunk renderMonitor
 
 renderMonitor :: (Monitor, Rect) -> Render ()
 renderMonitor (monitor@JobMonitor {}, rect@(Rect x y w h)) = do
