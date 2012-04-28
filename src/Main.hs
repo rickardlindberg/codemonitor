@@ -18,9 +18,10 @@ main = do
 
 showMainWindow :: IO ()
 showMainWindow = do
-    builder    <- builderFromFile "interface.glade"
-    mainWindow <- builderGetObject builder castToWindow "main_window"
-    canvas     <- builderGetObject builder castToDrawingArea "canvas"
+    mainWindow <- windowNew
+    canvas <- drawingAreaNew
+    set mainWindow [ windowTitle := "Code Monitor", containerChild := canvas ]
+
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
     (watchDir, jobs, monitors) <- create "monitor.config"
@@ -44,12 +45,6 @@ showMainWindow = do
 
     widgetShowAll mainWindow
     return ()
-
-builderFromFile :: FilePath -> IO Builder
-builderFromFile path = do
-    builder <- builderNew
-    builderAddFromFile builder path
-    return builder
 
 redraw canvas timeRef jobsRef monitorsRef event = do
     oldT <- readIORef timeRef
