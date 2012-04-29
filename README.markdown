@@ -6,6 +6,9 @@ when files change on disk and displays the output of the commands graphically.
 `codemonitor` can be used for example to automatically run your tests when you
 save a source file.
 
+I have recorded a demo that you can watch here:
+http://www.youtube.com/watch?v=oucd1p9cjrI&hd=1
+
 ## Getting started
 
 `codemonitor` is written in Haskell and runs on Linux. (The only Linux
@@ -27,7 +30,7 @@ this:
 
 First you need to specify a configuration file that tells `codemonitor` in
 which directory to look for file changes and what commands to run. The
-configuration for code monitor itself looks like this:
+configuration for `codemonitor` itself looks like this:
 
     .
     tests \.hs$ sh run-tests
