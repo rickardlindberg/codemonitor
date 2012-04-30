@@ -1,4 +1,4 @@
 #!/bin/sh
 ./compile-app &&
-ghc -isrc --make -fwarn-unused-imports -Werror tests/Notifier.hs &&
-./tests/Notifier
+ghc -isrc:tests --make -fwarn-unused-imports -Werror tests/AllTests.hs &&
+./tests/AllTests
