@@ -1,7 +1,4 @@
-import Asserts
-import Data.IORef
 import Fixtures
-import Notifier
 import Rect
 import System.Directory
 import System.FilePath
@@ -12,23 +9,18 @@ import Test.QuickCheck
 
 main = hspecX $ do
 
-    describe "notification service" $ do
+    describe "notification service:" $ do
 
-        it "file modified in directory" $ withTmpDir $ \dir -> do
-            filesRef <- newIORef []
-            setupNotifications dir (\f -> modifyIORef filesRef (f:))
+        it "notifies when file modified in directory" $ withTmpDir $ \dir -> do
+            assertNotified <- setupNotificationsTest dir
+            modifyFile $ dir </> "foo"
+            assertNotified "foo"
 
-            touch $ dir </> "foo"
-            assertGotFile filesRef "foo"
-
-        it "file modified in subdirectory" $ withTmpDir $ \dir -> do
+        it "notifies when file modified in subdirectory" $ withTmpDir $ \dir -> do
             createDirectory $ dir </> "subdir"
-
-            filesRef <- newIORef []
-            setupNotifications dir (\f -> modifyIORef filesRef (f:))
-
-            touch $ dir </> "subdir" </> "foo"
-            assertGotFile filesRef "foo"
+            assertNotified <- setupNotificationsTest dir
+            modifyFile $ dir </> "subdir" </> "foo"
+            assertNotified ("subdir" </> "foo")
 
     describe "rectangle operations:" $
 

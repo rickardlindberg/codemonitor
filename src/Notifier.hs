@@ -10,10 +10,10 @@ setupNotifications dir notifyFileChanged = do
     i <- initINotify
     allDirs <- getDirsRecursive dir
     forM_ allDirs $ \dir ->
-        addWatch i [Modify, MoveIn, MoveOut] dir handle
+        addWatch i [Modify] dir (handle dir)
     where
-        handle (Modified _ (Just f)) = notifyFileChanged f
-        handle _                     = return ()
+        handle rootDir (Modified _ (Just f)) = notifyFileChanged (makeRelative dir (rootDir </> f))
+        handle rootDir _                     = return ()
 
 getDirsRecursive :: FilePath -> IO [FilePath]
 getDirsRecursive rootDir = do
