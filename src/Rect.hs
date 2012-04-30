@@ -1,6 +1,6 @@
 module Rect where
 
-data Rect = Rect Double Double Double Double
+data Rect = Rect Double Double Double Double deriving (Eq, Show)
 
 shrink :: Double -> Rect -> Rect
 shrink by (Rect x y w h) = Rect (x+by) (y+by) (w-2*by) (h-2*by)
