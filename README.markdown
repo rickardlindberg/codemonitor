@@ -22,7 +22,7 @@ When all dependencies are installed, you should be able to run the program like
 this:
 
     cd ${PATH_TO_CODEMONITOR}
-    cabal configure --enable-tests
+    ./dev-setup
     ./run-tests
     ./run-app
 

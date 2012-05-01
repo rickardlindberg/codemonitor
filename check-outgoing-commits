@@ -7,7 +7,7 @@ for rev in $(git rev-list --reverse origin/master..master); do
     git checkout --quiet $rev
 
     ./clean
-    cabal configure --enable-tests
+    ./dev-setup
     ./run-tests
 
     git reset --hard
