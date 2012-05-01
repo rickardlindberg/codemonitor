@@ -1,0 +1,44 @@
+name:           codemonitor
+version:        0.1
+synopsis:       Tool that automatically runs arbitrary commands when files change on disk.
+homepage:       http://github.com/rickardlindberg/codemonitor
+author:         Rickard Lindberg <ricli85@gmail.com>
+cabal-version:  >= 1.2
+build-type:     Simple
+
+executable codemonitor
+  main-is:            Main.hs
+  hs-source-dirs:     src
+  ghc-options:        -fwarn-unused-imports -Werror
+  build-depends:      base >= 4
+               ,      haskell98
+               ,      regex-posix
+               ,      process
+               ,      containers
+               ,      gtk
+               ,      cairo
+               ,      hinotify
+               ,      filepath
+               ,      directory
+               ,      time
+
+Test-Suite test-codemonitor
+  type:               exitcode-stdio-1.0
+  main-is:            AllTests.hs
+  hs-source-dirs:     tests src
+  ghc-options:        -fwarn-unused-imports -Werror
+  build-depends:      base >= 4
+               ,      haskell98
+               ,      regex-posix
+               ,      process
+               ,      containers
+               ,      gtk
+               ,      cairo
+               ,      hinotify
+               ,      filepath
+               ,      directory
+               ,      time
+
+               ,      QuickCheck
+               ,      hspec
+               ,      HUnit

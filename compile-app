@@ -1,2 +1,2 @@
 #!/bin/sh
-ghc -isrc --make -fwarn-unused-imports -Werror src/Main.hs
+cabal build

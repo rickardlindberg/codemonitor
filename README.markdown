@@ -22,6 +22,8 @@ When all dependencies are installed, you should be able to run the program like
 this:
 
     cd ${PATH_TO_CODEMONITOR}
+    cabal configure --enable-tests
+    ./run-tests
     ./run-app
 
 ## Usage
@@ -51,7 +53,7 @@ matches the regexp. (Files ending with .hs in the example.)
 After the application has been compiled, you can run it like this, passing the
 path to the configuration file:
 
-    ${PATH_TO_CODEMONITOR}/src/Main monitor.config
+    ${PATH_TO_CODEMONITOR}/dist/build/codemonitor/codemonitor monitor.config
 
 # Help
 

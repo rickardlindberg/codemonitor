@@ -5,8 +5,11 @@ set -e
 for rev in $(git rev-list --reverse origin/master..master); do
     git log --oneline -1 $rev
     git checkout --quiet $rev
+
     ./clean
+    cabal configure --enable-tests
     ./run-tests
+
     git reset --hard
 done
 

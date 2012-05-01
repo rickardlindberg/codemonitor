@@ -1,4 +1,1 @@
-*.hi
-*.o
-/src/Main
-/tests/AllTests
+/dist

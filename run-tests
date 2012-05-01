@@ -1,4 +1,3 @@
 #!/bin/sh
 ./compile-app &&
-ghc -isrc:tests --make -fwarn-unused-imports -Werror tests/AllTests.hs &&
-./tests/AllTests
+./dist/build/test-codemonitor/test-codemonitor
