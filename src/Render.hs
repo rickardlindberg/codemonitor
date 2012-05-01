@@ -31,7 +31,7 @@ renderMonitors monitors rect = do
     forM_ mrShrunk renderMonitor
 
 renderMonitor :: (Monitor, Rect) -> Render ()
-renderMonitor (monitor@JobMonitor {}, rect@(Rect x y w h)) = do
+renderMonitor (monitor@JobMonitor {}, rect) = do
     -- Background
     let (r, g, b, a) = statusToBgColor (mSecondsInState monitor) (mJobStatus monitor)
     setSourceRGBA r g b a
@@ -40,25 +40,43 @@ renderMonitor (monitor@JobMonitor {}, rect@(Rect x y w h)) = do
     setSourceRGBA 0 0 0 0.4
     setLineWidth 1.5
     stroke
-    -- Title
-    selectFontFace fontName FontSlantNormal FontWeightBold
-    setFontSize fontSize
-    setSourceRGBA 0 0 0 0.7
-    ex <- textExtents (mJobName monitor)
-    moveTo (x + boxRadius - textExtentsXbearing ex) (y + boxRadius - textExtentsYbearing ex)
-    showText (mJobName monitor)
-    -- Additional text
+    let innerRect@(Rect x y w h) = shrink boxRadius rect
+    withClipRegion innerRect $ do
+        -- Title
+        selectFontFace fontName FontSlantNormal FontWeightBold
+        setFontSize fontSize
+        setSourceRGBA 0 0 0 0.7
+        ex <- textExtents (mJobName monitor)
+        moveTo (x - textExtentsXbearing ex) (y - textExtentsYbearing ex)
+        showText (mJobName monitor)
+        -- Additional text
+        let th = textExtentsHeight ex
+        let textRect@(Rect x2 y2 w2 h2) = Rect (x+boxRadius) (y+2*th) (w-boxRadius) (h-2*th)
+        renderMonitorText textRect (additionalLines (mJobStatus monitor))
+
+renderMonitorText :: Rect -> [String] -> Render ()
+renderMonitorText rect@(Rect x y w h) text = withClipRegion rect $ do
     selectFontFace fontName FontSlantNormal FontWeightNormal
-    setFontSize fontSize
-    setSourceRGBA 0 0 0 0.8
-    moveTo (x + 10) (y+20)
-    ex2 <- fontExtents
-    let errors = additionalLines (mJobStatus monitor)
-    let ys = map (\x -> fromIntegral x*fontExtentsHeight ex2 + y + boxRadius + 2*textExtentsHeight ex) [1..length errors]
-    forM_ (zip errors ys) $ \(e, y) -> do
-        moveTo (x + boxRadius + boxRadius) y
-        showText e
+    setFontSize    fontSize
+    setSourceRGBA  0 0 0 0.8
+    fontHeight <- fmap fontExtentsHeight fontExtents
+    let totalHeight = fromIntegral (length text) * fontHeight
+    let startY = if totalHeight <= h
+                     then y
+                     else y - (totalHeight - h)
+    let ys = map (\i -> fromIntegral i*fontHeight + startY) [1..length text]
+    forM_ (zip text ys) $ \(line, y) -> do
+        moveTo x y
+        showText line
     return ()
+
+withClipRegion :: Rect -> Render () -> Render ()
+withClipRegion (Rect x y w h) r = do
+    save
+    rectangle x y w h
+    clip
+    r
+    restore
 
 statusToBgColor :: Double -> Status -> (Double, Double, Double, Double)
 statusToBgColor t Idle     = (121/255, 245/255, 0, 1)
