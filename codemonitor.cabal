@@ -21,6 +21,13 @@ source-repository head
 
 executable codemonitor
   main-is:            Main.hs
+  other-modules:      Config
+               ,      Job
+               ,      Layout
+               ,      Monitor
+               ,      Notifier
+               ,      Rect
+               ,      Render
   hs-source-dirs:     src
   if flag(dev)
     ghc-options:      -fwarn-unused-imports -Werror
@@ -39,6 +46,8 @@ executable codemonitor
 Test-Suite test-codemonitor
   type:               exitcode-stdio-1.0
   main-is:            AllTests.hs
+  other-modules:      Asserts
+               ,      Fixtures
   hs-source-dirs:     tests src
   if flag(dev)
     ghc-options:      -fwarn-unused-imports -Werror
