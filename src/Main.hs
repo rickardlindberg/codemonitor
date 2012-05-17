@@ -40,7 +40,7 @@ showMainWindow = do
     setupNotifications watchDir (onFileChanged withJobLock forceRedraw)
     onInit withJobLock forceRedraw
 
-    timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 10
+    timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
     canvas     `onExpose`  redraw canvas timeRef jobsRef monitorsRef
