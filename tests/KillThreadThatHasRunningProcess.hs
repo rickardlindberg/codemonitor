@@ -7,7 +7,7 @@ import System.IO
 import System.Process
 
 main = do
-    id <- forkIO $ longCommand
+    id <- forkIO longCommand
     putStrLn "thread running"
     threadDelay $ 10*1000000
     putStrLn "thread killed"
@@ -44,7 +44,7 @@ myReadProcessWithExitCode cmd args input = do
         _ <- forkIO $ C.evaluate (length err) >> putMVar outMVar ()
 
         -- now write and flush any input
-        when (not (null input)) $ do hPutStr inh input; hFlush inh
+        unless (null input) $ do hPutStr inh input; hFlush inh
         hClose inh -- done with stdin
 
         -- wait on the output
