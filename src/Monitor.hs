@@ -2,11 +2,18 @@ module Monitor where
 
 import Job
 
-data Monitor = JobMonitor { mJobId          :: String
-                          , mSecondsInState :: Double
-                          , mJobName        :: String
-                          , mJobStatus      :: Status
-                          }
+data Monitor = JobMonitor
+                { mJobId          :: String
+                , mSecondsInState :: Double
+                , mJobName        :: String
+                , mJobStatus      :: Status
+                }
+             | OutputMonitor
+                { mJobId          :: String
+                , mSecondsInState :: Double
+                , mJobName        :: String
+                , mOutput         :: String
+                }
 
 updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
 updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
@@ -19,3 +26,4 @@ updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
             in monitor { mJobStatus      = newStatus
                        , mSecondsInState = newSeconds
                        }
+        updateMonitor monitor = monitor

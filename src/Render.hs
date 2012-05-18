@@ -53,6 +53,7 @@ renderMonitor (monitor@JobMonitor {}, rect) = do
         let th = textExtentsHeight ex
         let textRect@(Rect x2 y2 w2 h2) = Rect (x+boxRadius) (y+2*th) (w-boxRadius) (h-2*th)
         renderMonitorText textRect (additionalLines (mJobStatus monitor))
+renderMonitor _ = return ()
 
 renderMonitorText :: Rect -> [String] -> Render ()
 renderMonitorText rect@(Rect x y w h) text = withClipRegion rect $ do

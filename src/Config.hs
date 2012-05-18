@@ -16,4 +16,7 @@ jobDefToJob def =
     let (id:pattern:command:args) = words def
     in processJob id command args pattern
 
-jobToMonitor job = JobMonitor (jobId job) 0 (fullName job) (status job)
+jobToMonitor job =
+    case jobId job of
+        'o':'m':_ -> OutputMonitor (jobId job) 0 (fullName job) ""
+        _         -> JobMonitor (jobId job) 0 (fullName job) (status job)
