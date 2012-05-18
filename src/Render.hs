@@ -52,7 +52,7 @@ renderMonitor (monitor@StatusCodeMonitor {}, rect) = do
         -- Additional text
         let th = textExtentsHeight ex
         let textRect@(Rect x2 y2 w2 h2) = Rect (x+boxRadius) (y+2*th) (w-boxRadius) (h-2*th)
-        renderMonitorText textRect (additionalLines (mJobStatus monitor))
+        renderMonitorText textRect (additionalLines (mJobStatus monitor) (mOutput monitor))
 renderMonitor _ = return ()
 
 renderMonitorText :: Rect -> [String] -> Render ()
@@ -80,9 +80,9 @@ withClipRegion (Rect x y w h) r = do
     restore
 
 statusToBgColor :: Double -> Status -> (Double, Double, Double, Double)
-statusToBgColor t Idle     = (121/255, 245/255, 0, 1)
-statusToBgColor t Working  = (0, 204/255, 245/255, circularMovement 1 0.5 2 t)
-statusToBgColor t (Fail _) = (245/255, 36/255, 0, circularMovement 1 0.7 0.5 t)
+statusToBgColor t Idle    = (121/255, 245/255, 0, 1)
+statusToBgColor t Working = (0, 204/255, 245/255, circularMovement 1 0.5 2 t)
+statusToBgColor t Fail    = (245/255, 36/255, 0, circularMovement 1 0.7 0.5 t)
 
 circularMovement :: Double -> Double -> Double -> Double -> Double
 circularMovement start end animationTime totalTime = res
@@ -105,6 +105,6 @@ roundRectPath (Rect x y w h) = do
     arc (x+  boxRadius) (y+  boxRadius) boxRadius (180   * pi/180) (270 * pi/180)
     closePath
 
-additionalLines :: Status -> [String]
-additionalLines (Fail s) = lines s
-additionalLines _        = []
+additionalLines :: Status -> String -> [String]
+additionalLines Fail s = lines s
+additionalLines _    _ = []

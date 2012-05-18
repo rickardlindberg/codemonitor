@@ -80,7 +80,7 @@ onFileChanged withJobLock forceRedraw filePath = do
     withJobLock (reRunJobs filePath (onStatusChanged withJobLock forceRedraw))
     forceRedraw
 
-onStatusChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> String -> Status -> IO ()
-onStatusChanged withJobLock forceRedraw id status = do
-    withJobLock (return . updateJobStatus id status)
+onStatusChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> Signaller
+onStatusChanged withJobLock forceRedraw id status newOutput = do
+    withJobLock (return . updateJobStatus id status newOutput)
     forceRedraw
