@@ -31,7 +31,7 @@ renderMonitors monitors rect = do
     forM_ mrShrunk renderMonitor
 
 renderMonitor :: (Monitor, Rect) -> Render ()
-renderMonitor (monitor@JobMonitor {}, rect) = do
+renderMonitor (monitor@StatusCodeMonitor {}, rect) = do
     -- Background
     let (r, g, b, a) = statusToBgColor (mSecondsInState monitor) (mJobStatus monitor)
     setSourceRGBA r g b a

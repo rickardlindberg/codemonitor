@@ -37,8 +37,8 @@ rectsForTypes originalRect monitors =
            ]
 
 rectType :: Monitor -> RectType
-rectType (JobMonitor { mJobStatus = Fail _ }) = Large
-rectType _                                    = Small
+rectType (StatusCodeMonitor { mJobStatus = Fail _ }) = Large
+rectType _                                           = Small
 
 rectMapPop :: RectType -> RectMap -> (Rect, RectMap)
 rectMapPop t m = let rects     = fromJust $ M.lookup t m

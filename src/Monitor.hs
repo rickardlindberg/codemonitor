@@ -2,7 +2,7 @@ module Monitor where
 
 import Job
 
-data Monitor = JobMonitor
+data Monitor = StatusCodeMonitor
                 { mJobId          :: String
                 , mSecondsInState :: Double
                 , mJobName        :: String
@@ -18,7 +18,7 @@ data Monitor = JobMonitor
 updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
 updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
     where
-        updateMonitor monitor@(JobMonitor {}) =
+        updateMonitor monitor@(StatusCodeMonitor {}) =
             let newStatus  = status $ jobWithId jobs (mJobId monitor)
                 newSeconds = if mJobStatus monitor == newStatus
                                 then secondsSinceLastUpdate + mSecondsInState monitor
