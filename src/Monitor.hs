@@ -8,7 +8,7 @@ data Monitor = StatusCodeMonitor
                 , mJobName        :: String
                 , mJobStatus      :: Status
                 }
-             | OutputMonitor
+             | StdoutMonitor
                 { mJobId          :: String
                 , mSecondsInState :: Double
                 , mJobName        :: String
