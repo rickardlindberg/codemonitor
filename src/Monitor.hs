@@ -29,4 +29,9 @@ updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
                        , mJobStatus      = newStatus
                        , mOutput         = newOutput
                        }
-        updateMonitor monitor = monitor
+        updateMonitor monitor@(StdoutMonitor {}) =
+            let newOutput  = output $ jobWithId jobs (mJobId monitor)
+                newSeconds = secondsSinceLastUpdate + mSecondsInState monitor
+            in monitor { mSecondsInState = newSeconds
+                       , mOutput         = newOutput
+                       }
