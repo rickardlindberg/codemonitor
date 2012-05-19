@@ -25,7 +25,7 @@ reRunJob signalResult job = do
     -- NOTE: signalResult must be called asynchronoulsy, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- forkIO $ runThread job signalResult
-    return $ job { thread = Just threadId, status = Working }
+    return $ job { thread = Just threadId, status = Working, output = "" }
 
 cancel :: Job -> IO ()
 cancel Job { thread = Just id } = killThread id
