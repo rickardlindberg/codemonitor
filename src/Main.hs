@@ -9,7 +9,7 @@ import Job
 import Job.Types
 import Monitor
 import Notifier
-import Render
+import Render.Graphics
 import System
 
 main :: IO ()

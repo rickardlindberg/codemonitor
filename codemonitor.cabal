@@ -28,7 +28,7 @@ executable codemonitor
                ,      Monitor
                ,      Notifier
                ,      Render.Rect
-               ,      Render
+               ,      Render.Graphics
   hs-source-dirs:     src
   if flag(dev)
     ghc-options:      -fwarn-unused-imports -Werror
