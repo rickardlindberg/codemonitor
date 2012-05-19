@@ -17,12 +17,12 @@ findRects originalRect monitors = match monitors rectMap
     where
         rectMap           = rectsForTypes originalRect monitors
         match []     _    = []
-        match (m:ms) mmap = let (rect, restMap) = rectMapPop (rectType m) mmap
+        match (m:ms) mmap = let (rect, restMap) = rectMapPop (rectType monitors m) mmap
                             in (m, rect):match ms restMap
 
 rectsForTypes :: Rect -> [Monitor] -> RectMap
 rectsForTypes originalRect monitors =
-    let types     = map rectType monitors
+    let types     = map (rectType monitors) monitors
         numSmalle = length $ filter (==Small) types
         numLarge  = length $ filter (==Large) types
         smallArea = if numLarge == 0
@@ -36,9 +36,15 @@ rectsForTypes originalRect monitors =
            , (Large, splitVertical largeArea numLarge)
            ]
 
-rectType :: Monitor -> RectType
-rectType (StatusCodeMonitor { mJobStatus = Fail }) = Large
-rectType _                                         = Small
+rectType :: [Monitor] -> Monitor -> RectType
+rectType _ (StatusCodeMonitor { mJobStatus = Fail }) = Large
+rectType m (StdoutMonitor     {                   }) = if any isFailing m
+                                                           then Small
+                                                           else Large
+rectType _ _                                         = Small
+
+isFailing (StatusCodeMonitor { mJobStatus = Fail }) = True
+isFailing _                                         = False
 
 rectMapPop :: RectType -> RectMap -> (Rect, RectMap)
 rectMapPop t m = let rects     = fromJust $ M.lookup t m
