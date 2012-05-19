@@ -3,7 +3,7 @@ module Render where
 import Control.Arrow
 import Control.Monad
 import Graphics.Rendering.Cairo hiding (status, Status)
-import Job
+import Job.Types
 import Layout
 import Monitor
 import Rect

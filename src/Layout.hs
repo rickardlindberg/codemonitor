@@ -1,7 +1,7 @@
 module Layout where
 
 import Data.Maybe
-import Job
+import Job.Types
 import Monitor
 import qualified Data.Map as M
 import Rect

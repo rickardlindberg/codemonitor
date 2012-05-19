@@ -1,6 +1,6 @@
 module Config where
 
-import Job
+import Job.Types
 import Monitor
 
 create :: FilePath -> IO (String, Jobs, [Monitor])

@@ -6,6 +6,7 @@ import Data.IORef
 import Data.Time.Clock
 import Graphics.UI.Gtk
 import Job
+import Job.Types
 import Monitor
 import Notifier
 import Render

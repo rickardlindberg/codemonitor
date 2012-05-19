@@ -1,41 +1,12 @@
 module Job where
 
 import Control.Concurrent
+import Job.Types
 import System.Exit
 import System.Process
 import Text.Regex.Posix
 
-data Jobs = Jobs [Job]
-
-createJobs :: [Job] -> Jobs
-createJobs = Jobs
-
-jobWithId :: Jobs -> String -> Job
-jobWithId (Jobs jobs) id = find jobs
-    where
-        find [] = error "gaaah"
-        find (x:xs) | jobId x == id = x
-                    | otherwise     = find xs
-
-data Job = Job
-    { jobId     :: String
-    , name      :: String
-    , args      :: [String]
-    , matchExpr :: String
-    , status    :: Status
-    , output    :: String
-    , thread    :: Maybe ThreadId
-    }
-
-data Status = Idle | Working | Fail deriving (Eq)
-
 type Signaller = String -> Status -> String -> IO ()
-
-fullName :: Job -> String
-fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
-
-processJob :: String -> String -> [String] -> String -> Job
-processJob jobId name args expr = Job jobId name args expr Idle "" Nothing
 
 runAllJobs :: Signaller -> Jobs -> IO Jobs
 runAllJobs signalResult (Jobs jobs) = fmap Jobs (mapM (reRunJob signalResult) jobs)
