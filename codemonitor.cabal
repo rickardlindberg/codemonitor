@@ -24,7 +24,7 @@ executable codemonitor
   other-modules:      Config
                ,      Job
                ,      Job.Types
-               ,      Layout
+               ,      Render.Layout
                ,      Monitor
                ,      Notifier
                ,      Render.Rect

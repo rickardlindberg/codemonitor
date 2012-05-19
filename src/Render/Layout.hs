@@ -1,4 +1,4 @@
-module Layout where
+module Render.Layout where
 
 import Data.Maybe
 import Job.Types

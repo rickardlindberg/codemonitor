@@ -4,8 +4,8 @@ import Control.Arrow
 import Control.Monad
 import Graphics.Rendering.Cairo hiding (status, Status)
 import Job.Types
-import Layout
 import Monitor
+import Render.Layout
 import Render.Rect
 
 type Color = (Double, Double, Double, Double)
