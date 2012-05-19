@@ -5,7 +5,7 @@ import Control.Concurrent
 import Control.Exception.Base (bracket)
 import Data.IORef
 import Notifier
-import Rect
+import Render.Rect
 import System.Directory
 import System.IO
 import Test.HUnit

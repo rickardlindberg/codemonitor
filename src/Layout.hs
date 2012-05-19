@@ -4,7 +4,7 @@ import Data.Maybe
 import Job.Types
 import Monitor
 import qualified Data.Map as M
-import Rect
+import Render.Rect
 
 data RectType = Small
               | Large

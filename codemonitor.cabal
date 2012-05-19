@@ -27,7 +27,7 @@ executable codemonitor
                ,      Layout
                ,      Monitor
                ,      Notifier
-               ,      Rect
+               ,      Render.Rect
                ,      Render
   hs-source-dirs:     src
   if flag(dev)

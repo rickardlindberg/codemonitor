@@ -1,4 +1,4 @@
-module Rect where
+module Render.Rect where
 
 data Rect = Rect Double Double Double Double deriving (Eq, Show)
 

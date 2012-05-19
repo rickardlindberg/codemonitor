@@ -6,7 +6,7 @@ import Graphics.Rendering.Cairo hiding (status, Status)
 import Job.Types
 import Layout
 import Monitor
-import Rect
+import Render.Rect
 
 type Color = (Double, Double, Double, Double)
 

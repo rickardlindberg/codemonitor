@@ -1,5 +1,5 @@
 import Fixtures
-import Rect
+import Render.Rect
 import System.Directory
 import System.FilePath
 import Test.Hspec.HUnit()
