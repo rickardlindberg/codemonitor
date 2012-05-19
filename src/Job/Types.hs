@@ -19,6 +19,9 @@ data Job = Job
 
 data Jobs = Jobs [Job]
 
+createJob :: String -> String -> [String] -> String -> Job
+createJob jobId name args expr = Job jobId name args expr Idle "" Nothing
+
 createJobs :: [Job] -> Jobs
 createJobs = Jobs
 
@@ -31,6 +34,3 @@ jobWithId (Jobs jobs) id = find jobs
 
 fullName :: Job -> String
 fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
-
-processJob :: String -> String -> [String] -> String -> Job
-processJob jobId name args expr = Job jobId name args expr Idle "" Nothing
