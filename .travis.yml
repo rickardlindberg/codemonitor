@@ -1,4 +1,5 @@
 language: haskell
+before_install: cabal update
 install:
   - cabal update --verbose=2
   - cabal install
