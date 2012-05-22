@@ -1,2 +1,4 @@
 language: haskell
-before_install: cabal install Cabal
+before_install:
+    - cabal update
+    - cabal install cabal-install
