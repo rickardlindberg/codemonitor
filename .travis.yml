@@ -3,7 +3,6 @@ before_install:
     - cabal update
     - cabal install Cabal-1.10.2.0
     - cabal install cabal-install
-    - cabal --version
-    - ~/.cabal/bin/cabal --version
+    - ~/.cabal/bin/cabal install gtk2hs-buildtools
 install:
     - ~/.cabal/bin/cabal install
