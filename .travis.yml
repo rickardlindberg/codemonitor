@@ -3,7 +3,10 @@ before_install:
     - cabal update
     - cabal install Cabal-1.10.2.0
     - cabal install cabal-install
-    - ~/.cabal/bin/cabal install gtk2hs-buildtools
 install:
+    - ~/.cabal/bin/cabal install gtk2hs-buildtools
+    - ~/.cabal/bin/cabal install QuickCheck
+    - ~/.cabal/bin/cabal install hspec
+    - ~/.cabal/bin/cabal install HUnit
     - ~/.cabal/bin/cabal install
 script: ~/.cabal/bin/cabal configure --enable-tests && ~/.cabal/bin/cabal build && ~/.cabal/bin/cabal test
