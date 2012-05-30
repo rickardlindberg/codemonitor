@@ -6,3 +6,4 @@ before_install:
     - ~/.cabal/bin/cabal install gtk2hs-buildtools
 install:
     - ~/.cabal/bin/cabal install
+script: ~/.cabal/bin/cabal configure --enable-tests && ~/.cabal/bin/cabal build && ~/.cabal/bin/cabal test
