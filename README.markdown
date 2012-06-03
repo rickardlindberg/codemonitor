@@ -58,3 +58,5 @@ path to the configuration file:
 # Help
 
 Please contact me if you have questions or problems.
+
+[![Build Status](https://secure.travis-ci.org/rickardlindberg/codemonitor.png)](http://travis-ci.org/rickardlindberg/codemonitor)
