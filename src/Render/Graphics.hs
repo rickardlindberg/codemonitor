@@ -14,7 +14,7 @@ boxRadius = 10.0
 innerSpace = 2
 outerSpace = innerSpace/2
 fontName = "Monospace"
-fontSize = 11.0
+fontSize = 14.0
 
 renderScreen :: [Monitor] -> Double -> Double -> Render ()
 renderScreen monitors w h = do
@@ -75,7 +75,7 @@ renderDocument rect@(Rect x y w h) heading body =
         -- Title
         selectFontFace fontName FontSlantNormal FontWeightBold
         setFontSize fontSize
-        setSourceRGBA 0 0 0 0.7
+        setSourceRGBA 0 0 0 0.8
         ex <- textExtents heading
         moveTo (x - textExtentsXbearing ex) (y - textExtentsYbearing ex)
         showText heading
@@ -111,7 +111,7 @@ withClipRegion (Rect x y w h) r = do
 statusToBgColor :: Double -> Status -> Color
 statusToBgColor t Idle    = (121/255, 245/255, 0, 1)
 statusToBgColor t Working = (0, 204/255, 245/255, circularMovement 1 0.5 2 t)
-statusToBgColor t Fail    = (245/255, 36/255, 0, circularMovement 1 0.7 0.5 t)
+statusToBgColor t Fail    = (255/255, 173/255, 173/255, circularMovement 1 0.7 0.5 t)
 
 circularMovement :: Double -> Double -> Double -> Double -> Double
 circularMovement start end animationTime totalTime = res
