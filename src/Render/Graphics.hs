@@ -15,6 +15,11 @@ innerSpace = 2
 outerSpace = innerSpace/2
 fontName = "Monospace"
 fontSize = 14.0
+backgroundColor = (1, 1, 0.6, 1)
+runningColor = (0, 204/255, 245/255, 1)
+successColor = (121/255, 245/255, 0, 1)
+failureColor = (255/255, 173/255, 173/255, 1)
+monitorColor = (1, 0, 1, 1)
 
 renderScreen :: [Monitor] -> Double -> Double -> Render ()
 renderScreen monitors w h = do
@@ -23,7 +28,8 @@ renderScreen monitors w h = do
 
 renderBackground :: Render ()
 renderBackground = do
-    setSourceRGB 1 1 0.6
+    let (r, g, b, a) = backgroundColor
+    setSourceRGBA r g b a
     paint
 
 renderMonitors :: [Monitor] -> Rect -> Render ()
@@ -36,13 +42,13 @@ renderMonitor :: (Monitor, Rect) -> Render ()
 renderMonitor (monitor@StatusCodeMonitor {}, rect) =
     renderDocumentBox
         rect
-        (statusToBgColor (mSecondsInState monitor) (mJobStatus monitor))
+        (statusToBgColor (mJobStatus monitor))
         (mJobName monitor)
         (additionalLines (mJobStatus monitor) (mOutput monitor))
 renderMonitor (monitor@StdoutMonitor {}, rect) =
     renderDocumentBox
         rect
-        (1, 0, 1, 1)
+        monitorColor
         (mJobName monitor)
         (lines (mOutput monitor))
 
@@ -108,10 +114,10 @@ withClipRegion (Rect x y w h) r = do
     r
     restore
 
-statusToBgColor :: Double -> Status -> Color
-statusToBgColor t Idle    = (121/255, 245/255, 0, 1)
-statusToBgColor t Working = (0, 204/255, 245/255, circularMovement 1 0.5 2 t)
-statusToBgColor t Fail    = (255/255, 173/255, 173/255, circularMovement 1 0.7 0.5 t)
+statusToBgColor :: Status -> Color
+statusToBgColor Idle    = successColor
+statusToBgColor Working = runningColor
+statusToBgColor Fail    = failureColor
 
 circularMovement :: Double -> Double -> Double -> Double -> Double
 circularMovement start end animationTime totalTime = res
