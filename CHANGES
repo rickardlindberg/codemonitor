@@ -1,0 +1,17 @@
+codemonitor 0.2, released on ...........
+========================================
+
+New features, enhancements:
+
+  * Support for monitor stdout jobs
+  * Improve contrast of text
+  * Show only one red job maximized at a time
+
+Bug fixes:
+
+  * Text is only rendered inside its rectangle
+
+codemonitor 0.1, released on 1 May 2012
+=======================================
+
+First version.
