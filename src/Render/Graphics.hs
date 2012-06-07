@@ -2,6 +2,7 @@ module Render.Graphics where
 
 import Control.Arrow
 import Control.Monad
+import Data.List.Utils
 import Graphics.Rendering.Cairo hiding (status, Status)
 import Job.Types
 import Monitor
@@ -103,7 +104,7 @@ renderMultilineText rect@(Rect x y w h) text = withClipRegion rect $ do
     let ys = map (\i -> fromIntegral i*fontHeight + startY) [1..length text]
     forM_ (zip text ys) $ \(line, y) -> do
         moveTo x y
-        showText line
+        showText $ replace "\t" "    " line
     return ()
 
 withClipRegion :: Rect -> Render () -> Render ()

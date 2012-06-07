@@ -43,6 +43,7 @@ executable codemonitor
                ,      filepath
                ,      directory
                ,      time
+               ,      MissingH
 
 Test-Suite test-codemonitor
   type:               exitcode-stdio-1.0
@@ -63,6 +64,7 @@ Test-Suite test-codemonitor
                ,      filepath
                ,      directory
                ,      time
+               ,      MissingH
 
                ,      QuickCheck
                ,      hspec
