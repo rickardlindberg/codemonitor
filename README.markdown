@@ -55,6 +55,30 @@ path to the configuration file:
 
     ${PATH_TO_CODEMONITOR}/dist/build/codemonitor/codemonitor monitor.config
 
+# Known bugs/limitations
+
+## Parallel jobs
+
+If a file changes while a job is running, a new job is started immediately. The
+problem is that the old job is not stopped. So you get two jobs running in
+parallel. That is very problematic when compiling code for example since the
+parallel jobs touch the same files.
+
+A workaround for this limitation is to create a shell script that runs the
+command you want to run, and before it does that, it kills the old version of
+itself. It can be done with a snippet like this:
+
+    pidfile=lastpid.txt
+    if [ -e $pidfile ]; then
+        kill -9 $(cat $pidfile)
+        rm $pidfile
+    fi
+    echo $$ > $pidfile
+
+    ... run your command here ...
+
+    rm -f $pidfile
+
 # Help
 
 Please contact me if you have questions or problems.
