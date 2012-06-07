@@ -10,6 +10,7 @@ New features, enhancements:
 Bug fixes:
 
   * Text is only rendered inside its rectangle
+  * Render tabs with 4 spaces
 
 codemonitor 0.1, released on 1 May 2012
 =======================================
