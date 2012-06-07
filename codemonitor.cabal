@@ -24,11 +24,11 @@ executable codemonitor
   other-modules:      Config
                ,      Job
                ,      Job.Types
-               ,      Render.Layout
                ,      Monitor
                ,      Notifier
-               ,      Render.Rect
                ,      Render.Graphics
+               ,      Render.Layout
+               ,      Render.Rect
   hs-source-dirs:     src
   if flag(dev)
     ghc-options:      -fwarn-unused-imports -Werror
