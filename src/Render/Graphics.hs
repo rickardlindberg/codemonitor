@@ -101,7 +101,8 @@ renderMultilineText rect@(Rect x y w h) text = withClipRegion rect $ do
     let startY = if totalHeight <= h
                      then y
                      else y - (totalHeight - h)
-    let ys = map (\i -> fromIntegral i*fontHeight + startY) [1..length text]
+    let fontOutsideClipCompensation = 2
+    let ys = map (\i -> fromIntegral i*fontHeight + startY - fontOutsideClipCompensation) [1..length text]
     forM_ (zip text ys) $ \(line, y) -> do
         moveTo x y
         showText $ replace "\t" "    " line
