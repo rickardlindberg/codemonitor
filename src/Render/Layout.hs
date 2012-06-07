@@ -1,56 +1,50 @@
 module Render.Layout where
 
-import Data.Maybe
+import Data.List
 import Job.Types
 import Monitor
-import qualified Data.Map as M
 import Render.Rect
 
-data RectType = Small
-              | Large
-              deriving (Eq, Ord)
-
-type RectMap = M.Map RectType [Rect]
+highLevel   = 100
+mediumLevel = 50
+lowLevel    = 0
 
 findRects :: Rect -> [Monitor] -> [(Monitor, Rect)]
-findRects originalRect monitors = match monitors rectMap
+findRects originalRect monitors = zip orderedMonitors rectangles
     where
-        rectMap           = rectsForTypes originalRect monitors
-        match []     _    = []
-        match (m:ms) mmap = let (rect, restMap) = rectMapPop (rectType monitors m) mmap
-                            in (m, rect):match ms restMap
+        orderedMonitors = orderMonitors monitors
+        rectangles
+            | orderedMonitors == []
+                = []
+            | hasHighest
+                = let (topArea, bottomArea) = divideVertical originalRect 0.9
+                      tops    = splitVertical topArea 1
+                      bottoms = splitHorizontal bottomArea (numMonitors - 1)
+                  in tops ++ bottoms
+            | hasMedium
+                = let (topArea, bottomArea) = divideVertical originalRect 0.9
+                      tops    = splitVertical topArea numMedium
+                      bottoms = splitHorizontal bottomArea (numMonitors - numMedium)
+                  in tops ++ bottoms
+            | otherwise
+                = let (_, bottomArea) = divideVertical originalRect 0.7
+                      bottoms = splitHorizontal bottomArea numMonitors
+                  in bottoms
+        numMonitors       = length orderedMonitors
+        hasHighest        = countLevels highLevel > 0
+        numMedium         = countLevels mediumLevel
+        hasMedium         = numMedium > 0
+        countLevels level = length $ filter ((==level) . attentionLevel) orderedMonitors
 
-rectsForTypes :: Rect -> [Monitor] -> RectMap
-rectsForTypes originalRect monitors =
-    let types     = map (rectType monitors) monitors
-        numSmalle = length $ filter (==Small) types
-        numLarge  = length $ filter (==Large) types
-        smallArea = if numLarge == 0
-                        then snd $ divideVertical originalRect 0.7
-                        else snd $ divideVertical originalRect 0.9
-        largeArea = if numSmalle == 0
-                        then originalRect
-                        else fst (divideVertical originalRect 0.9)
-    in rectMapCreate
-           [ (Small, splitHorizontal smallArea numSmalle)
-           , (Large, splitVertical largeArea numLarge)
-           ]
+orderMonitors :: [Monitor] -> [Monitor]
+orderMonitors monitors = sortBy cmp monitors
+    where
+        cmp a b
+            | attentionLevel a > attentionLevel b = LT
+            | attentionLevel a < attentionLevel b = GT
+            | otherwise                           = EQ
 
-rectType :: [Monitor] -> Monitor -> RectType
-rectType _ (StatusCodeMonitor { mJobStatus = Fail }) = Large
-rectType m (StdoutMonitor     {                   }) = if any isFailing m
-                                                           then Small
-                                                           else Large
-rectType _ _                                         = Small
-
-isFailing (StatusCodeMonitor { mJobStatus = Fail }) = True
-isFailing _                                         = False
-
-rectMapPop :: RectType -> RectMap -> (Rect, RectMap)
-rectMapPop t m = let rects     = fromJust $ M.lookup t m
-                     firstRect = head rects
-                     restRects = tail rects
-                 in (firstRect, M.insert t restRects m)
-
-rectMapCreate :: [(RectType, [Rect])] -> RectMap
-rectMapCreate = M.fromList
+attentionLevel :: Monitor -> Int
+attentionLevel (StatusCodeMonitor _ _ _ Fail _) = highLevel
+attentionLevel (StdoutMonitor _ _ _ _)          = mediumLevel
+attentionLevel _                                = lowLevel

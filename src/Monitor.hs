@@ -15,6 +15,7 @@ data Monitor = StatusCodeMonitor
                 , mJobName        :: String
                 , mOutput         :: String
                 }
+             deriving (Show, Eq)
 
 updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
 updateMonitors secondsSinceLastUpdate jobs = map updateMonitor

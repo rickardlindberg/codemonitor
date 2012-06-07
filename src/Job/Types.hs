@@ -5,7 +5,7 @@ import Control.Concurrent
 data Status = Idle
             | Working
             | Fail
-            deriving (Eq)
+            deriving (Eq, Show)
 
 data Job = Job
     { jobId     :: String
