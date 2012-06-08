@@ -27,7 +27,10 @@ showMainWindow = do
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
     args <- getArgs
-    (watchDir, jobs, monitors) <- create (head args)
+    (watchDir, jobs, monitors) <-
+        case args of
+            [path] -> create path
+            []     -> getContents >>= createFromConfig
 
     lock <- newEmptyMVar
     jobsRef <- newIORef jobs

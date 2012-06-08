@@ -4,8 +4,10 @@ import Job.Types
 import Monitor
 
 create :: FilePath -> IO (String, Jobs, [Monitor])
-create configPath = do
-    content <- readFile configPath
+create configPath = readFile configPath >>= createFromConfig
+
+createFromConfig :: String -> IO (String, Jobs, [Monitor])
+createFromConfig content = do
     let (watchDir:rest) = lines content
     let jobs = map jobDefToJob rest
     let monitors = map jobToMonitor jobs

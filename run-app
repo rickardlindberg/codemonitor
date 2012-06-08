@@ -1,3 +1,8 @@
 #!/bin/sh
 ./compile-app &&
-./dist/build/codemonitor/codemonitor monitor.config
+./dist/build/codemonitor/codemonitor <<EOF
+.
+tests \.hs$ sh run-tests
+lint \.hs$ hlint src tests
+omTest \.hs$ printf hello\n\tworld
+EOF
