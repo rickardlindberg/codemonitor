@@ -3,6 +3,7 @@ codemonitor 0.2, released on ...........
 
 New features, enhancements:
 
+  * Make program accept configuration on stdin
   * Support for monitor stdout jobs
   * Improve contrast of text
   * Show only one red job maximized at a time
