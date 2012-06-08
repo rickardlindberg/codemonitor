@@ -14,17 +14,23 @@ http://www.youtube.com/watch?v=oucd1p9cjrI&hd=1
 `codemonitor` is written in Haskell and runs on Linux. (The only Linux
 dependency though is inotify.)
 
-It depends on gtk2hs and hinotify Haskell packages.
-
-Please contact me if you can't figure out how to install dependencies.
-
-When all dependencies are installed, you should be able to run the program like
+`codemonitor` is uploaded to
+[Hackage](http://hackage.haskell.org/package/codemonitor)
+for easy installation. Once you have installed the
+[Haskell Platform](http://hackage.haskell.org/platform/) (
+`yum/apt-get install haskell-platform`), you can install `codemonitor` like
 this:
 
-    cd ${PATH_TO_CODEMONITOR}
-    ./dev-setup
-    ./run-tests
-    ./run-app
+    # Fore some reason, cabal does not install this dependency, so we have to
+    # install it manually
+    cabal install gtk2hs-buildtools
+
+    # Then we can install codemonitor
+    cabal install codemonitor
+
+After this, `codemonitor` should be installed in `~/.cabal/bin/codemonitor`.
+
+Please contact me if you have trouble installing.
 
 ## Usage
 
@@ -50,10 +56,22 @@ matches the regexp. (Files ending with .hs in the example.)
 
 ### Running it
 
-After the application has been compiled, you can run it like this, passing the
+After the application has been installed, you can run it like this, passing the
 path to the configuration file:
 
-    ${PATH_TO_CODEMONITOR}/dist/build/codemonitor/codemonitor monitor.config
+    ~/.cabal/bin/codemonitor monitor.config
+
+### Passing configuration to stdin
+
+You can also pass the configuration directly to stdin. It is useful if you only
+want a single file to run codemonitor. It can look something like this:
+
+    #!/bin/sh
+    ~/.cabal/bin/codemonitor <<EOF
+    .
+    tests \.hs$ sh run-tests
+    lint \.hs$ hlint .
+    EOF
 
 # Known bugs/limitations
 
