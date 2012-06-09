@@ -21,14 +21,35 @@ for easy installation. Once you have installed the
 `yum/apt-get install haskell-platform`), you can install `codemonitor` like
 this:
 
+    # You need to have gtk installed first. Install it with you package manager
+    # before you continue. You might need dev libraries as well to be able to
+    # install the Haskell bindings.
+
+    # The install script depends on programs in this directory, so we must
+    # export it here. It is a good idea to always put this on your path so that
+    # cabal always refers to the cabal in ~/.cabal/bin.
+    export PATH="~/.cabal/bin:$PATH"
+
     # Fore some reason, cabal does not install this dependency, so we have to
-    # install it manually
+    # install it manually.
     cabal install gtk2hs-buildtools
 
-    # Then we can install codemonitor
+    # Then we can install codemonitor.
     cabal install codemonitor
 
 After this, `codemonitor` should be installed in `~/.cabal/bin/codemonitor`.
+
+If you have an old version of `cabal`, you might need to upgrade it. Before you
+install `codemonitor` you need to run this:
+
+    # This will install a new cabal in ~/.cabal/bin/, so make sure the path is
+    # exported when you try to install codemonitor.
+    cabal install cabal-install
+
+To install a new version of `codemonitor`, run these commands:
+
+    cabal update
+    cabal install codemonitor
 
 Please contact me if you have trouble installing.
 
