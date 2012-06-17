@@ -14,6 +14,8 @@ findRects originalRect monitors = zip orderedMonitors rectangles
         rectangles
             | orderedMonitors == []
                 = []
+            | (hasHighest || hasMedium) && numMonitors == 1
+                = [originalRect]
             | hasHighest
                 = let (topArea, bottomArea) = divideVertical originalRect 0.9
                       tops    = splitVertical topArea 1
