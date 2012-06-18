@@ -23,15 +23,15 @@ reRunJobs fileChanged signalResult (Jobs jobs) = fmap Jobs (mapM reRunIfMatch jo
 
 reRunJob :: Signaller -> Job -> IO Job
 reRunJob signalResult job = do
-    cancel job
-    -- NOTE: signalResult must be called asynchronoulsy, otherwise the lock for
+    cancel $ runningInfo job
+    -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
     return $ job { runningInfo = RunningJobInfo Working "" (Just threadId) }
 
-cancel :: Job -> IO ()
-cancel Job { runningInfo = RunningJobInfo _ _ (Just id) } = killThread id
-cancel _                                                  = return ()
+cancel :: RunningJobInfo -> IO ()
+cancel (RunningJobInfo _ _ (Just id) ) = killThread id
+cancel _                               = return ()
 
 runThread :: Job -> Signaller -> IO ThreadId
 runThread job signalResult = do
