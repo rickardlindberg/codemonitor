@@ -27,11 +27,11 @@ reRunJob signalResult job = do
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
-    return $ job { runningInfo = RunningJobInfo Working "" (Just threadId) }
+    return $ job { runningInfo = RunningJobInfo (jobId job) Working "" (Just threadId) }
 
 cancel :: RunningJobInfo -> IO ()
-cancel (RunningJobInfo _ _ (Just id) ) = killThread id
-cancel _                               = return ()
+cancel (RunningJobInfo _ _ _ (Just id) ) = killThread id
+cancel _                                 = return ()
 
 runThread :: Job -> Signaller -> IO ThreadId
 runThread job signalResult = do
@@ -71,6 +71,6 @@ updateJobStatus :: String -> Status -> String -> Jobs -> Jobs
 updateJobStatus theId status newOutput (Jobs jobs) = Jobs (map updateJobInner jobs)
     where
         updateJobInner job
-            | jobId job == theId = job { runningInfo = RunningJobInfo status (jobOutput (runningInfo job) ++ newOutput) Nothing
+            | jobId job == theId = job { runningInfo = RunningJobInfo theId status (jobOutput (runningInfo job) ++ newOutput) Nothing
                                        }
             | otherwise          = job
