@@ -22,7 +22,7 @@ updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
             let newStatus  = status $ jobWithId jobs (mJobId monitor)
-                newOutput  = output $ jobWithId jobs (mJobId monitor)
+                newOutput  = jobOutput $ runningInfo $ jobWithId jobs (mJobId monitor)
                 newSeconds = if mJobStatus monitor == newStatus
                                 then secondsSinceLastUpdate + mSecondsInState monitor
                                 else 0
@@ -31,7 +31,7 @@ updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
                        , mOutput         = newOutput
                        }
         updateMonitor monitor@(StdoutMonitor {}) =
-            let newOutput  = output $ jobWithId jobs (mJobId monitor)
+            let newOutput  = jobOutput $ runningInfo $ jobWithId jobs (mJobId monitor)
                 newSeconds = secondsSinceLastUpdate + mSecondsInState monitor
             in monitor { mSecondsInState = newSeconds
                        , mOutput         = newOutput
