@@ -15,12 +15,21 @@ data Job = Job
     , status    :: Status
     , output    :: String
     , thread    :: Maybe ThreadId
+    , info      :: Maybe RunningJobInfo
     }
 
 data Jobs = Jobs [Job]
 
+data RunningJobInfo = RunningJobInfo
+    { jobStatus    :: Status
+    , jobOutput    :: String
+    , jobThread    :: Maybe ThreadId
+    }
+
+data RunningJobInfos = RunningJobInfos [RunningJobInfo]
+
 createJob :: String -> String -> [String] -> String -> Job
-createJob jobId name args expr = Job jobId name args expr Idle "" Nothing
+createJob jobId name args expr = Job jobId name args expr Idle "" Nothing Nothing
 
 createJobs :: [Job] -> Jobs
 createJobs = Jobs
