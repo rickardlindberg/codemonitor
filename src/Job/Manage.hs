@@ -1,4 +1,4 @@
-module Job where
+module Job.Manage where
 
 import Control.Concurrent
 import Job.Types

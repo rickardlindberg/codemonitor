@@ -5,7 +5,7 @@ import Control.Concurrent
 import Data.IORef
 import Data.Time.Clock
 import Graphics.UI.Gtk
-import Job
+import Job.Manage
 import Job.Types
 import Monitor
 import Notifier
