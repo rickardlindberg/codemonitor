@@ -26,14 +26,14 @@ reRunJob signalResult job = do
     cancel job
     -- NOTE: signalResult must be called asynchronoulsy, otherwise the lock for
     -- jobsRef will deadlock.
-    threadId <- forkIO $ runThread job signalResult
+    threadId <- runThread job signalResult
     return $ job { thread = Just threadId, status = Working, output = "" }
 
 cancel :: Job -> IO ()
 cancel Job { thread = Just id } = killThread id
 cancel _                        = return ()
 
-runThread :: Job -> Signaller -> IO ()
+runThread :: Job -> Signaller -> IO ThreadId
 runThread job signalResult = do
     let code = do
 
@@ -65,7 +65,7 @@ runThread job signalResult = do
             then signalResult (jobId job) Idle (err ++ out)
             else signalResult (jobId job) Fail (err ++ out)
 
-    onException code (putStrLn "TODO: kill process here")
+    forkIO $ onException code (putStrLn "TODO: kill process here")
 
 
 updateJobStatus :: String -> Status -> String -> Jobs -> Jobs
