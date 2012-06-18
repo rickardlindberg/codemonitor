@@ -61,7 +61,7 @@ redraw canvas timeRef jobsRef monitorsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
-    modifyIORef monitorsRef (updateMonitors delta jobs)
+    modifyIORef monitorsRef (updateMonitors delta (jobsToRunningJobInfos jobs))
     monitors <- readIORef monitorsRef
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True

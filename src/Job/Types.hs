@@ -18,10 +18,10 @@ data Job = Job
 data Jobs = Jobs [Job]
 
 data RunningJobInfo = RunningJobInfo
-    { runningId    :: String
-    , jobStatus    :: Status
-    , jobOutput    :: String
-    , jobThread    :: Maybe ThreadId
+    { runningJobId    :: String
+    , jobStatus       :: Status
+    , jobOutput       :: String
+    , jobThread       :: Maybe ThreadId
     }
 
 data RunningJobInfos = RunningJobInfos [RunningJobInfo]
@@ -31,6 +31,16 @@ createJob jobId name args expr = Job jobId name args expr (RunningJobInfo jobId 
 
 createJobs :: [Job] -> Jobs
 createJobs = Jobs
+
+jobsToRunningJobInfos :: Jobs -> RunningJobInfos
+jobsToRunningJobInfos (Jobs jobs) = RunningJobInfos (map runningInfo jobs)
+
+runningInfoWithId :: RunningJobInfos -> String -> RunningJobInfo
+runningInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
+    where
+        find [] = error ("no running info with id " ++ id)
+        find (x:xs) | runningJobId x == id = x
+                    | otherwise          = find xs
 
 jobWithId :: Jobs -> String -> Job
 jobWithId (Jobs jobs) id = find jobs

@@ -17,12 +17,12 @@ data Monitor = StatusCodeMonitor
                 }
              deriving (Show, Eq)
 
-updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
-updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
+updateMonitors :: Double -> RunningJobInfos -> [Monitor] -> [Monitor]
+updateMonitors secondsSinceLastUpdate runningInfos = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
-            let newStatus  = jobStatus $ runningInfo $ jobWithId jobs (mJobId monitor)
-                newOutput  = jobOutput $ runningInfo $ jobWithId jobs (mJobId monitor)
+            let newStatus  = jobStatus $ runningInfoWithId runningInfos (mJobId monitor)
+                newOutput  = jobOutput $ runningInfoWithId runningInfos (mJobId monitor)
                 newSeconds = if mJobStatus monitor == newStatus
                                 then secondsSinceLastUpdate + mSecondsInState monitor
                                 else 0
@@ -31,8 +31,9 @@ updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
                        , mOutput         = newOutput
                        }
         updateMonitor monitor@(StdoutMonitor {}) =
-            let newOutput  = jobOutput $ runningInfo $ jobWithId jobs (mJobId monitor)
+            let newOutput  = jobOutput $ runningInfoWithId runningInfos (mJobId monitor)
                 newSeconds = secondsSinceLastUpdate + mSecondsInState monitor
             in monitor { mSecondsInState = newSeconds
                        , mOutput         = newOutput
                        }
+
