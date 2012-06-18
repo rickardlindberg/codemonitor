@@ -21,7 +21,7 @@ updateMonitors :: Double -> Jobs -> [Monitor] -> [Monitor]
 updateMonitors secondsSinceLastUpdate jobs = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
-            let newStatus  = status $ jobWithId jobs (mJobId monitor)
+            let newStatus  = jobStatus $ runningInfo $ jobWithId jobs (mJobId monitor)
                 newOutput  = jobOutput $ runningInfo $ jobWithId jobs (mJobId monitor)
                 newSeconds = if mJobStatus monitor == newStatus
                                 then secondsSinceLastUpdate + mSecondsInState monitor
