@@ -35,28 +35,27 @@ cancel _                        = return ()
 
 runThread :: Job -> Signaller -> IO ThreadId
 runThread job signalResult = do
-    (Just inh, Just outh, Just errh, pid) <-
-        createProcess (proc (name job) (args job)){ std_in  = CreatePipe,
-                                       std_out = CreatePipe,
-                                       std_err = CreatePipe }
+    (_, Just hOut, Just hErr, pid) <-
+        createProcess (proc (name job) (args job))
+            { std_out = CreatePipe , std_err = CreatePipe }
 
-    let code = do
+    let waitForProcessToFinish = do
 
         outMVar <- newEmptyMVar
 
         -- fork off a thread to start consuming stdout
-        out  <- hGetContents outh
+        out <- hGetContents hOut
         _ <- forkIO $ evaluate (length out) >> putMVar outMVar ()
 
         -- fork off a thread to start consuming stderr
-        err  <- hGetContents errh
+        err <- hGetContents hErr
         _ <- forkIO $ evaluate (length err) >> putMVar outMVar ()
 
         -- wait on the output
         takeMVar outMVar
         takeMVar outMVar
-        hClose outh
-        hClose errh
+        hClose hOut
+        hClose hErr
 
         -- wait on the process
         exit <- waitForProcess pid
@@ -65,7 +64,7 @@ runThread job signalResult = do
             then signalResult (jobId job) Idle (err ++ out)
             else signalResult (jobId job) Fail (err ++ out)
 
-    forkIO $ onException code (terminateProcess pid)
+    forkIO $ onException waitForProcessToFinish (terminateProcess pid)
 
 
 updateJobStatus :: String -> Status -> String -> Jobs -> Jobs
