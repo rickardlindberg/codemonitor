@@ -33,9 +33,8 @@ showMainWindow = do
 
     lock <- newEmptyMVar
     jobsRef <- newIORef jobs
-    let withJobLock = createWithJobLock lock jobsRef
-
     monitorsRef <- newIORef monitors
+    let withJobLock = createWithJobLock lock jobsRef monitorsRef
 
     setupNotifications watchDir (onFileChanged withJobLock forceRedraw)
     onInit withJobLock forceRedraw
@@ -43,25 +42,24 @@ showMainWindow = do
     timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas jobsRef monitorsRef
+    canvas     `onExpose`  redraw canvas monitorsRef
 
     widgetShowAll mainWindow
     return ()
 
-redraw canvas jobsRef monitorsRef event = do
+redraw canvas monitorsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
-    jobs <- readIORef jobsRef
-    modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos jobs))
     monitors <- readIORef monitorsRef
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
 
-createWithJobLock :: MVar () -> IORef Jobs -> (Jobs -> IO Jobs) -> IO ()
-createWithJobLock lock jobsRef fn = do
+createWithJobLock :: MVar () -> IORef Jobs -> IORef [Monitor] -> (Jobs -> IO Jobs) -> IO ()
+createWithJobLock lock jobsRef monitorsRef fn = do
     putMVar lock ()
     jobs <- readIORef jobsRef
     newJobs <- fn jobs
+    modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos newJobs))
     writeIORef jobsRef newJobs
     takeMVar lock
 
