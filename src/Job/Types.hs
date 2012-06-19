@@ -35,19 +35,13 @@ createJobs = Jobs
 jobsToRunningJobInfos :: Jobs -> RunningJobInfos
 jobsToRunningJobInfos (Jobs jobs) = RunningJobInfos (map runningInfo jobs)
 
-runningInfoWithId :: RunningJobInfos -> String -> RunningJobInfo
-runningInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
+runningJobInfoWithId :: RunningJobInfos -> String -> Maybe RunningJobInfo
+runningJobInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
     where
-        find [] = error ("no running info with id " ++ id)
-        find (x:xs) | runningJobId x == id = x
-                    | otherwise          = find xs
-
-jobWithId :: Jobs -> String -> Job
-jobWithId (Jobs jobs) id = find jobs
-    where
-        find [] = error "gaaah"
-        find (x:xs) | jobId x == id = x
-                    | otherwise     = find xs
+        find [] = Nothing
+        find (x:xs)
+            | runningJobId x == id = Just x
+            | otherwise            = find xs
 
 fullName :: Job -> String
 fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args

@@ -19,13 +19,12 @@ updateMonitors :: RunningJobInfos -> [Monitor] -> [Monitor]
 updateMonitors runningInfos = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
-            let newStatus  = jobStatus $ runningInfoWithId runningInfos (mJobId monitor)
-                newOutput  = jobOutput $ runningInfoWithId runningInfos (mJobId monitor)
-            in monitor { mJobStatus      = newStatus
-                       , mOutput         = newOutput
-                       }
+            case runningJobInfoWithId runningInfos (mJobId monitor) of
+                Nothing -> monitor
+                Just x  -> monitor { mJobStatus = jobStatus x
+                                   , mOutput    = jobOutput x
+                                   }
         updateMonitor monitor@(StdoutMonitor {}) =
-            let newOutput  = jobOutput $ runningInfoWithId runningInfos (mJobId monitor)
-            in monitor { mOutput         = newOutput
-                       }
-
+            case runningJobInfoWithId runningInfos (mJobId monitor) of
+                Nothing -> monitor
+                Just x  -> monitor { mOutput = jobOutput x }
