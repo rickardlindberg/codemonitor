@@ -39,9 +39,9 @@ orderMonitors :: [Monitor] -> [Monitor]
 orderMonitors = sortWith attentionLevel
 
 attentionLevel :: Monitor -> AttentionLevel
-attentionLevel (StatusCodeMonitor _ _ _ Fail _) = High
-attentionLevel (StdoutMonitor _ _ _ _)          = Medium
-attentionLevel _                                = Low
+attentionLevel (StatusCodeMonitor _ _ Fail _) = High
+attentionLevel (StdoutMonitor _ _ _)          = Medium
+attentionLevel _                              = Low
 
 countAttentionLevels :: AttentionLevel -> [Monitor] -> Int
 countAttentionLevels level = length . filterAttentionLevel level

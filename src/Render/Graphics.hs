@@ -121,18 +121,6 @@ statusToBgColor Idle    = successColor
 statusToBgColor Working = runningColor
 statusToBgColor Fail    = failureColor
 
-circularMovement :: Double -> Double -> Double -> Double -> Double
-circularMovement start end animationTime totalTime = res
-    where
-        rest    = totalTime - animationTime * fromIntegral (floor $ totalTime / animationTime)
-        percent = rest / animationTime
-        d1      = end - start
-        d2      = start - end
-        p2      = percent * 2
-        res     = if p2 <= 1
-                      then start + d1 * percent
-                      else end   + d2 * percent
-
 additionalLines :: Status -> String -> [String]
 additionalLines Fail s = lines s
 additionalLines _    _ = []

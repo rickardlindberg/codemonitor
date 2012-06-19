@@ -3,7 +3,6 @@ module Main (main) where
 import Config
 import Control.Concurrent
 import Data.IORef
-import Data.Time.Clock
 import Graphics.UI.Gtk
 import Job.Manage
 import Job.Types
@@ -38,30 +37,22 @@ showMainWindow = do
 
     monitorsRef <- newIORef monitors
 
-    t <- getCurrentTime
-    timeRef <- newIORef t
-
     setupNotifications watchDir (onFileChanged withJobLock forceRedraw)
     onInit withJobLock forceRedraw
 
     timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas timeRef jobsRef monitorsRef
+    canvas     `onExpose`  redraw canvas jobsRef monitorsRef
 
     widgetShowAll mainWindow
     return ()
 
-redraw canvas timeRef jobsRef monitorsRef event = do
-    oldT <- readIORef timeRef
-    t <- getCurrentTime
-    writeIORef timeRef t
-    let delta = realToFrac (diffUTCTime t oldT)
-
+redraw canvas jobsRef monitorsRef event = do
     (w, h) <- widgetGetSize canvas
     drawin <- widgetGetDrawWindow canvas
     jobs <- readIORef jobsRef
-    modifyIORef monitorsRef (updateMonitors delta (jobsToRunningJobInfos jobs))
+    modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos jobs))
     monitors <- readIORef monitorsRef
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True

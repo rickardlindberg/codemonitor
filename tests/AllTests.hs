@@ -51,20 +51,20 @@ main = hspecX $ do
         describe "does not change when:" $
 
             it "no monitors require large space failing" $ do
-                let monitors = [ StatusCodeMonitor "" 0 "" Idle ""
-                               , StatusCodeMonitor "" 0 "" Working ""
+                let monitors = [ StatusCodeMonitor "" "" Idle ""
+                               , StatusCodeMonitor "" "" Working ""
                                ]
                 orderMonitors monitors @?= monitors
 
         describe "does change when:" $
 
             it "a monitor require large space" $ do
-                let monitors = [ StatusCodeMonitor "" 0 "" Idle ""
-                               , StatusCodeMonitor "" 0 "" Working ""
-                               , StdoutMonitor "" 0 "" ""
+                let monitors = [ StatusCodeMonitor "" "" Idle ""
+                               , StatusCodeMonitor "" "" Working ""
+                               , StdoutMonitor "" "" ""
                                ]
-                let expected = [ StdoutMonitor "" 0 "" ""
-                               , StatusCodeMonitor "" 0 "" Idle ""
-                               , StatusCodeMonitor "" 0 "" Working ""
+                let expected = [ StdoutMonitor "" "" ""
+                               , StatusCodeMonitor "" "" Idle ""
+                               , StatusCodeMonitor "" "" Working ""
                                ]
                 orderMonitors monitors @?= expected

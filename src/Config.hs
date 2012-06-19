@@ -20,5 +20,5 @@ jobDefToJob def =
 
 jobToMonitor job =
     case jobId job of
-        'o':'m':_ -> StdoutMonitor (jobId job) 0 (fullName job) ""
-        _         -> StatusCodeMonitor (jobId job) 0 (fullName job) (jobStatus (runningInfo job)) ""
+        'o':'m':_ -> StdoutMonitor (jobId job) (fullName job) ""
+        _         -> StatusCodeMonitor (jobId job) (fullName job) (jobStatus (runningInfo job)) ""
