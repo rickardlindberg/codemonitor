@@ -25,19 +25,7 @@ showMainWindow = do
 
     let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
 
-    args <- getArgs
-    (watchDir, jobs, monitors) <-
-        case args of
-            [path] -> create path
-            []     -> getContents >>= createFromConfig
-
-    lock <- newEmptyMVar
-    jobsRef <- newIORef jobs
-    monitorsRef <- newIORef monitors
-    let withJobLock = createWithJobLock lock jobsRef monitorsRef
-
-    setupNotifications watchDir (onFileChanged withJobLock forceRedraw)
-    onInit withJobLock forceRedraw
+    monitorsRef <- initOurStuff forceRedraw
 
     timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 100
 
@@ -54,26 +42,34 @@ redraw canvas monitorsRef event = do
     renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
     return True
 
-createWithJobLock :: MVar () -> IORef Jobs -> IORef [Monitor] -> (Jobs -> IO Jobs) -> IO ()
-createWithJobLock lock jobsRef monitorsRef fn = do
-    putMVar lock ()
-    jobs <- readIORef jobsRef
-    newJobs <- fn jobs
-    modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos newJobs))
-    writeIORef jobsRef newJobs
-    takeMVar lock
+initOurStuff forceRedraw = do
+    (watchDir, jobs, monitors) <- readConfig
 
-onInit :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> IO ()
-onInit withJobLock forceRedraw = do
-    withJobLock $ runAllJobs (onStatusChanged withJobLock forceRedraw)
-    forceRedraw
+    jobsRef     <- newIORef jobs
+    monitorsRef <- newIORef monitors
 
-onFileChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> FilePath -> IO ()
-onFileChanged withJobLock forceRedraw filePath = do
-    withJobLock (reRunJobs filePath (onStatusChanged withJobLock forceRedraw))
-    forceRedraw
+    lock <- newEmptyMVar
+    let mutateGlobalState fn = do
+        putMVar lock ()
+        jobs <- readIORef jobsRef
+        newJobs <- fn jobs
+        modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos newJobs))
+        writeIORef jobsRef newJobs
+        takeMVar lock
+        forceRedraw
 
-onStatusChanged :: ((Jobs -> IO Jobs) -> IO ()) -> IO () -> Signaller
-onStatusChanged withJobLock forceRedraw id status newOutput = do
-    withJobLock (return . updateJobStatus id status newOutput)
-    forceRedraw
+    let jobFinishedHandler id status newOutput = mutateGlobalState (return . updateJobStatus id status newOutput)
+
+    setupNotifications watchDir $ \filePath ->
+        mutateGlobalState (reRunJobs filePath jobFinishedHandler)
+
+    mutateGlobalState (runAllJobs jobFinishedHandler)
+
+    return monitorsRef
+
+readConfig :: IO (String, Jobs, [Monitor])
+readConfig = do
+    args <- getArgs
+    case args of
+        [path] -> create path
+        []     -> getContents >>= createFromConfig
