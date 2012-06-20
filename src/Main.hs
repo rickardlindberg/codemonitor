@@ -56,10 +56,10 @@ initOurStuff forceRedraw = do
         -- modify refs
         jobs         <- readIORef jobsRef
         runningInfos <- readIORef runningInfosRef
-        newJobs      <- fn jobs runningInfos
-        modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos newJobs))
+        (newJobs, newInfos)      <- fn jobs runningInfos
+        modifyIORef monitorsRef (updateMonitors newInfos)
         writeIORef jobsRef newJobs
-        writeIORef runningInfosRef (jobsToRunningJobInfos newJobs)
+        writeIORef runningInfosRef newInfos
         -- release lock
         takeMVar lock
         -- redraw since state has changed
