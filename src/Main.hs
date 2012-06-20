@@ -45,27 +45,40 @@ redraw canvas monitorsRef event = do
 initOurStuff forceRedraw = do
     (watchDir, jobs, monitors) <- readConfig
 
-    jobsRef     <- newIORef jobs
-    monitorsRef <- newIORef monitors
+    jobsRef         <- newIORef jobs
+    runningInfosRef <- newIORef (jobsToRunningJobInfos jobs)
+    monitorsRef     <- newIORef monitors
 
     lock <- newEmptyMVar
     let mutateGlobalState fn = do
+        -- aquire lock
         putMVar lock ()
-        jobs <- readIORef jobsRef
-        newJobs <- fn jobs
+        -- modify refs
+        jobs         <- readIORef jobsRef
+        runningInfos <- readIORef runningInfosRef
+        newJobs      <- fn jobs runningInfos
         modifyIORef monitorsRef (updateMonitors (jobsToRunningJobInfos newJobs))
         writeIORef jobsRef newJobs
+        writeIORef runningInfosRef (jobsToRunningJobInfos newJobs)
+        -- release lock
         takeMVar lock
+        -- redraw since state has changed
         forceRedraw
 
-    let jobFinishedHandler id status newOutput = mutateGlobalState (return . updateJobStatus id status newOutput)
+    let jobFinishedHandler id status newOutput = mutateGlobalState (myFn3 updateJobStatus id status newOutput)
 
     setupNotifications watchDir $ \filePath ->
-        mutateGlobalState (reRunJobs filePath jobFinishedHandler)
+        mutateGlobalState (myFn filePath jobFinishedHandler)
 
-    mutateGlobalState (runAllJobs jobFinishedHandler)
+    mutateGlobalState (myFn2 jobFinishedHandler)
 
     return monitorsRef
+
+myFn filePath jobFinishedHandler jobs runningInfos = reRunJobs filePath jobFinishedHandler jobs
+
+myFn2 jobFinishedHandler jobs runningInfos = runAllJobs jobFinishedHandler jobs
+
+myFn3 updateJobStatus id status newOutput jobs runningInfos = return (updateJobStatus id status newOutput jobs)
 
 readConfig :: IO (String, Jobs, [Monitor])
 readConfig = do
