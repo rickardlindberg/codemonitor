@@ -1,7 +1,7 @@
 module Render.Layout where
 
 import GHC.Exts
-import Job.Types
+import Job.Running
 import Monitor
 import Render.Rect
 

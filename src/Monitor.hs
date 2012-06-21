@@ -1,6 +1,6 @@
 module Monitor where
 
-import Job.Types
+import Job.Running
 
 data Monitor = StatusCodeMonitor
                 { mJobId          :: String

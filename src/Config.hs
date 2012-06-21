@@ -1,5 +1,6 @@
 module Config where
 
+import Job.Running
 import Job.Types
 import Monitor
 
