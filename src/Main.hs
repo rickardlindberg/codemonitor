@@ -45,7 +45,6 @@ redraw canvas monitorsRef event = do
 initOurStuff forceRedraw = do
     (watchDir, jobs, monitors) <- readConfig
 
-    jobsRef         <- newIORef jobs
     runningInfosRef <- newIORef (jobsToRunningJobInfos jobs)
     monitorsRef     <- newIORef monitors
 
@@ -54,12 +53,9 @@ initOurStuff forceRedraw = do
         -- aquire lock
         putMVar lock ()
         -- modify refs
-        jobs         <- readIORef jobsRef
         runningInfos <- readIORef runningInfosRef
         newInfos     <- fn jobs runningInfos
-        let newJobs = mergeInfo jobs newInfos
         modifyIORef monitorsRef (updateMonitors newInfos)
-        writeIORef jobsRef newJobs
         writeIORef runningInfosRef newInfos
         -- release lock
         takeMVar lock
