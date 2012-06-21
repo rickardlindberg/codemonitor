@@ -4,8 +4,8 @@ import Config
 import Control.Concurrent
 import Data.IORef
 import Graphics.UI.Gtk
+import Job.Description
 import Job.Manage
-import Job.Types
 import Monitor
 import Notifier
 import Render.Graphics

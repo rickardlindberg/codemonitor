@@ -1,4 +1,4 @@
-module Job.Types where
+module Job.Description where
 
 import Text.Regex.Posix
 

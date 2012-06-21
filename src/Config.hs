@@ -1,7 +1,7 @@
 module Config where
 
+import Job.Description
 import Job.Running
-import Job.Types
 import Monitor
 
 create :: FilePath -> IO (String, [JobDescription], [Monitor])

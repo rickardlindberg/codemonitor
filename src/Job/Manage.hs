@@ -3,8 +3,8 @@ module Job.Manage where
 import Control.Concurrent
 import Control.Exception
 import Data.Maybe
+import Job.Description
 import Job.Running
-import Job.Types
 import System.Exit
 import System.IO
 import System.Process

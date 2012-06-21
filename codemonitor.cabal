@@ -23,8 +23,8 @@ executable codemonitor
   main-is:            Main.hs
   other-modules:      Config
                ,      Job.Manage
+               ,      Job.Description
                ,      Job.Running
-               ,      Job.Types
                ,      Monitor
                ,      Notifier
                ,      Render.Graphics
