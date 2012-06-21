@@ -56,7 +56,7 @@ initOurStuff forceRedraw = do
         -- modify refs
         jobs         <- readIORef jobsRef
         runningInfos <- readIORef runningInfosRef
-        (_, newInfos)      <- fn jobs runningInfos
+        newInfos     <- fn jobs runningInfos
         let newJobs = mergeInfo jobs newInfos
         modifyIORef monitorsRef (updateMonitors newInfos)
         writeIORef jobsRef newJobs

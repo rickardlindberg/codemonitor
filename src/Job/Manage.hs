@@ -10,17 +10,17 @@ import Text.Regex.Posix
 
 type Signaller = String -> Status -> String -> IO ()
 
-runAllJobs :: Signaller -> Jobs -> RunningJobInfos -> IO (Jobs, RunningJobInfos)
+runAllJobs :: Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
 runAllJobs signalResult (Jobs jobs) runningInfos = do
     x <- fmap Jobs (mapM (reRunJob signalResult) jobs)
     let y = jobsToRunningJobInfos x
-    return (x, y)
+    return y
 
-reRunJobs :: FilePath -> Signaller -> Jobs -> RunningJobInfos -> IO (Jobs, RunningJobInfos)
+reRunJobs :: FilePath -> Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
 reRunJobs fileChanged signalResult (Jobs jobs) runningInfos = do
     x <- fmap Jobs (mapM reRunIfMatch jobs)
     let y = jobsToRunningJobInfos x
-    return (x, y)
+    return y
     where
         reRunIfMatch job =
             if fileChanged =~ matchExpr job
@@ -72,12 +72,11 @@ runThread job signalResult = do
 
     forkIO $ onException waitForProcessToFinish (terminateProcess pid)
 
-
-updateJobStatus :: String -> Status -> String -> Jobs -> RunningJobInfos -> (Jobs, RunningJobInfos)
+updateJobStatus :: String -> Status -> String -> Jobs -> RunningJobInfos -> RunningJobInfos
 updateJobStatus theId status newOutput (Jobs jobs) runningInfos =
     let x = Jobs (map updateJobInner jobs)
         y = jobsToRunningJobInfos x
-    in (x, y)
+    in y
     where
         updateJobInner job
             | jobId job == theId = job { runningInfo = RunningJobInfo theId status (jobOutput (runningInfo job) ++ newOutput) Nothing
