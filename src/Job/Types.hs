@@ -35,6 +35,13 @@ createJobs = Jobs
 jobsToRunningJobInfos :: Jobs -> RunningJobInfos
 jobsToRunningJobInfos (Jobs jobs) = RunningJobInfos (map runningInfo jobs)
 
+mergeInfo :: Jobs -> RunningJobInfos -> Jobs
+mergeInfo (Jobs jobs) runningInfo = Jobs $ map xxx jobs
+    where
+        xxx job = case runningJobInfoWithId runningInfo (jobId job) of
+                      Just x  -> job { runningInfo = x }
+                      Nothing -> job
+
 runningJobInfoWithId :: RunningJobInfos -> String -> Maybe RunningJobInfo
 runningJobInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
     where
