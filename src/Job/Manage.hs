@@ -11,33 +11,29 @@ import Text.Regex.Posix
 type Signaller = String -> Status -> String -> IO ()
 
 runAllJobs :: Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
-runAllJobs signalResult (Jobs jobs) runningInfos = do
-    x <- fmap Jobs (mapM (reRunJob signalResult) jobs)
-    let y = jobsToRunningJobInfos x
-    return y
+runAllJobs signalResult (Jobs jobs) runningInfos =
+    fmap RunningJobInfos (mapM (reRunJob signalResult runningInfos) jobs)
 
 reRunJobs :: FilePath -> Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
 reRunJobs fileChanged signalResult (Jobs jobs) runningInfos = do
-    x <- fmap Jobs (mapM reRunIfMatch jobs)
-    let y = jobsToRunningJobInfos x
-    return y
+    let matchingJobs = filter isMatch jobs
+    newInfos <- mapM (reRunJob signalResult runningInfos) matchingJobs
+    return $ mergeTwoInfos (RunningJobInfos newInfos) runningInfos
     where
-        reRunIfMatch job =
-            if fileChanged =~ matchExpr job
-                then reRunJob signalResult job
-                else return job
+        isMatch job = fileChanged =~ matchExpr job
 
-reRunJob :: Signaller -> Job -> IO Job
-reRunJob signalResult job = do
-    cancel $ runningInfo job
+reRunJob :: Signaller -> RunningJobInfos -> Job -> IO RunningJobInfo
+reRunJob signalResult runningInfos job = do
+    cancel $ runningJobInfoWithId runningInfos (jobId job)
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
-    return $ job { runningInfo = RunningJobInfo (jobId job) Working "" (Just threadId) }
+    let info = RunningJobInfo (jobId job) Working "" (Just threadId)
+    return info
 
-cancel :: RunningJobInfo -> IO ()
-cancel (RunningJobInfo _ _ _ (Just id) ) = killThread id
-cancel _                                 = return ()
+cancel :: Maybe RunningJobInfo -> IO ()
+cancel (Just (RunningJobInfo _ _ _ (Just id))) = killThread id
+cancel _                                       = return ()
 
 runThread :: Job -> Signaller -> IO ThreadId
 runThread job signalResult = do
@@ -74,11 +70,8 @@ runThread job signalResult = do
 
 updateJobStatus :: String -> Status -> String -> Jobs -> RunningJobInfos -> RunningJobInfos
 updateJobStatus theId status newOutput (Jobs jobs) runningInfos =
-    let x = Jobs (map updateJobInner jobs)
-        y = jobsToRunningJobInfos x
-    in y
+    processRunningInfos updateInfo runningInfos
     where
-        updateJobInner job
-            | jobId job == theId = job { runningInfo = RunningJobInfo theId status (jobOutput (runningInfo job) ++ newOutput) Nothing
-                                       }
-            | otherwise          = job
+        updateInfo info
+            | runningJobId info == theId = Just $ RunningJobInfo theId status (jobOutput info ++ newOutput) Nothing
+            | otherwise                  = Just info

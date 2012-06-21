@@ -1,6 +1,7 @@
 module Job.Types where
 
 import Control.Concurrent
+import Data.Maybe
 
 data Status = Idle
             | Working
@@ -25,6 +26,18 @@ data RunningJobInfo = RunningJobInfo
     }
 
 data RunningJobInfos = RunningJobInfos [RunningJobInfo]
+
+processRunningInfos :: (RunningJobInfo -> Maybe RunningJobInfo) -> RunningJobInfos -> RunningJobInfos
+processRunningInfos fn (RunningJobInfos infos) = RunningJobInfos $ mapMaybe fn infos
+
+mergeTwoInfos :: RunningJobInfos -> RunningJobInfos -> RunningJobInfos
+mergeTwoInfos (RunningJobInfos new) (RunningJobInfos old) =
+    RunningJobInfos $ filter notInNew old ++ new
+    where
+        notInNew info =
+            case runningJobInfoWithId (RunningJobInfos new) (runningJobId info) of
+                   Nothing -> True
+                   Just x  -> False
 
 createJob :: String -> String -> [String] -> String -> Job
 createJob jobId name args expr = Job jobId name args expr (RunningJobInfo jobId Idle "" Nothing)
