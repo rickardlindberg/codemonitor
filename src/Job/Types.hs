@@ -13,7 +13,6 @@ data Job = Job
     , name      :: String
     , args      :: [String]
     , matchExpr :: String
-    , runningInfo      :: RunningJobInfo
     }
 
 data Jobs = Jobs [Job]
@@ -40,13 +39,10 @@ mergeTwoInfos (RunningJobInfos new) (RunningJobInfos old) =
                    Just x  -> False
 
 createJob :: String -> String -> [String] -> String -> Job
-createJob jobId name args expr = Job jobId name args expr (RunningJobInfo jobId Idle "" Nothing)
+createJob = Job
 
 createJobs :: [Job] -> Jobs
 createJobs = Jobs
-
-jobsToRunningJobInfos :: Jobs -> RunningJobInfos
-jobsToRunningJobInfos (Jobs jobs) = RunningJobInfos (map runningInfo jobs)
 
 runningJobInfoWithId :: RunningJobInfos -> String -> Maybe RunningJobInfo
 runningJobInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
