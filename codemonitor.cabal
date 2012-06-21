@@ -22,7 +22,6 @@ source-repository head
 executable codemonitor
   main-is:            Main.hs
   other-modules:      Config
-               ,      Job.Manage
                ,      Job.Description
                ,      Job.Running
                ,      Monitor
