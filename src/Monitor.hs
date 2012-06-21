@@ -15,16 +15,16 @@ data Monitor = StatusCodeMonitor
                 }
              deriving (Show, Eq)
 
-updateMonitors :: [RunningJob] -> [Monitor] -> [Monitor]
-updateMonitors runningJobs = map updateMonitor
+updateMonitors :: JobStatusUpdate -> [Monitor] -> [Monitor]
+updateMonitors newStatus = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
-            case runningJobWithId (mJobId monitor) runningJobs of
-                Nothing -> monitor
-                Just x  -> monitor { mJobStatus = jobStatus x
-                                   , mOutput    = jobOutput x
-                                   }
+            if sId newStatus == mJobId monitor
+                then monitor { mJobStatus = sStatus newStatus
+                             , mOutput    = sOutput newStatus
+                             }
+                else monitor
         updateMonitor monitor@(StdoutMonitor {}) =
-            case runningJobWithId (mJobId monitor)runningJobs of
-                Nothing -> monitor
-                Just x  -> monitor { mOutput = jobOutput x }
+            if sId newStatus == mJobId monitor
+                then monitor { mOutput = sOutput newStatus }
+                else monitor

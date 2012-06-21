@@ -2,6 +2,7 @@ module Main (main) where
 
 import Config
 import Control.Concurrent
+import Control.Monad
 import Data.IORef
 import Graphics.UI.Gtk
 import Job.Description
@@ -49,29 +50,37 @@ initOurStuff forceRedraw = do
     monitorsRef    <- newIORef monitors
 
     lock <- newEmptyMVar
+
     let mutateGlobalState fn = do
         -- aquire lock
         putMVar lock ()
         -- modify refs
         runningJobs <- readIORef runningJobsRef
         newRunning  <- fn jobDescriptions runningJobs
-        modifyIORef monitorsRef (updateMonitors newRunning)
         writeIORef runningJobsRef newRunning
         -- release lock
         takeMVar lock
         -- redraw since state has changed
         forceRedraw
 
-    let jobFinishedHandler statusUpdate = mutateGlobalState (myFn3 storeJobResult statusUpdate)
+    let statusUpdateHandler newStatus = do
+        -- aquire lock
+        putMVar lock ()
+        -- modify refs
+        modifyIORef monitorsRef (updateMonitors newStatus)
+        when (sStatus newStatus /= Working) $
+            modifyIORef runningJobsRef (removeRunning (sId newStatus))
+        -- release lock
+        takeMVar lock
+        -- redraw since state has changed
+        forceRedraw
 
     setupNotifications watchDir $ \filePath ->
-        mutateGlobalState (reRunJobs filePath jobFinishedHandler)
+        mutateGlobalState (reRunJobs filePath statusUpdateHandler)
 
-    mutateGlobalState (runAllJobs jobFinishedHandler)
+    mutateGlobalState (runAllJobs statusUpdateHandler)
 
     return monitorsRef
-
-myFn3 storeJobResult statusUpdate jobDescriptions runningJobs = return (storeJobResult statusUpdate jobDescriptions runningJobs)
 
 readConfig :: IO (String, [JobDescription], [Monitor])
 readConfig = do

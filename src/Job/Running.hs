@@ -2,7 +2,6 @@ module Job.Running where
 
 import Control.Concurrent
 import Control.Exception
-import Data.Maybe
 import Job.Description
 import System.Exit
 import System.IO
@@ -16,8 +15,6 @@ data JobStatus
 
 data RunningJob = RunningJob
     { runningJobId :: String
-    , jobStatus    :: JobStatus
-    , jobOutput    :: String
     , jobThread    :: Maybe ThreadId
     }
 
@@ -26,6 +23,9 @@ data JobStatusUpdate = JobStatusUpdate
     , sStatus :: JobStatus
     , sOutput :: String
     }
+
+removeRunning :: String -> [RunningJob] -> [RunningJob]
+removeRunning id = filter (\rj -> runningJobId rj /= id)
 
 mergeTwoInfos :: [RunningJob] -> [RunningJob] -> [RunningJob]
 mergeTwoInfos new old =
@@ -60,12 +60,11 @@ reRunJob signalResult runningJobs job = do
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
-    let info = RunningJob (jobId job) Working "" (Just threadId)
-    return info
+    return $ RunningJob (jobId job) (Just threadId)
 
 cancel :: Maybe RunningJob -> IO ()
-cancel (Just (RunningJob _ _ _ (Just id))) = killThread id
-cancel _                                   = return ()
+cancel (Just (RunningJob _ (Just id))) = killThread id
+cancel _                               = return ()
 
 runThread :: JobDescription -> (JobStatusUpdate -> IO ()) -> IO ThreadId
 runThread job signalResult = do
@@ -74,6 +73,7 @@ runThread job signalResult = do
             { std_out = CreatePipe , std_err = CreatePipe }
 
     let waitForProcessToFinish = do
+        signalResult $ JobStatusUpdate (jobId job) Working ""
 
         outMVar <- newEmptyMVar
 
@@ -99,11 +99,3 @@ runThread job signalResult = do
             else signalResult $ JobStatusUpdate (jobId job) Fail (err ++ out)
 
     forkIO $ onException waitForProcessToFinish (terminateProcess pid)
-
-storeJobResult :: JobStatusUpdate -> [JobDescription] -> [RunningJob] -> [RunningJob]
-storeJobResult (JobStatusUpdate jobId newStatus newOutput) jobDescriptions runningInfos =
-    mapMaybe updateInfo runningInfos
-    where
-        updateInfo info
-            | runningJobId info == jobId = Just $ RunningJob jobId newStatus (jobOutput info ++ newOutput) Nothing
-            | otherwise                  = Just info
