@@ -3,6 +3,7 @@ module Job.Running where
 import Control.Concurrent
 import Control.Exception
 import Job.Description
+import qualified Data.Map as M
 import System.Exit
 import System.IO
 import System.Process
@@ -13,58 +14,46 @@ data JobStatus
     | Fail
     deriving (Eq, Show)
 
-data RunningJob = RunningJob
-    { runningJobId :: String
-    , jobThread    :: Maybe ThreadId
-    }
-
 data JobStatusUpdate = JobStatusUpdate
     { sId     :: String
     , sStatus :: JobStatus
     , sOutput :: String
     }
 
-removeRunning :: String -> [RunningJob] -> [RunningJob]
-removeRunning id = filter (\rj -> runningJobId rj /= id)
+data RunningJobs = RunningJobs (M.Map String ThreadId)
 
-mergeTwoInfos :: [RunningJob] -> [RunningJob] -> [RunningJob]
-mergeTwoInfos new old =
-    filter notInNew old ++ new
-    where
-        notInNew info =
-            case runningJobWithId (runningJobId info) new of
-                   Nothing -> True
-                   Just x  -> False
+emptyRunningJobs :: RunningJobs
+emptyRunningJobs = RunningJobs M.empty
 
-runningJobWithId :: String -> [RunningJob] -> Maybe RunningJob
-runningJobWithId id = find
-    where
-        find [] = Nothing
-        find (x:xs)
-            | runningJobId x == id = Just x
-            | otherwise            = find xs
+removeRunning :: String -> RunningJobs -> RunningJobs
+removeRunning id (RunningJobs map) = RunningJobs $ M.delete id map
 
-runAllJobs :: (JobStatusUpdate -> IO ()) -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
-runAllJobs signalResult jobDescriptions runningJobs =
-    mapM (reRunJob signalResult runningJobs) jobDescriptions
+threadIdForJobWithId :: String -> RunningJobs -> Maybe ThreadId
+threadIdForJobWithId id (RunningJobs map) = M.lookup id map
 
-reRunJobs :: FilePath -> (JobStatusUpdate -> IO ()) -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
+runAllJobs :: (JobStatusUpdate -> IO ()) -> [JobDescription] -> RunningJobs -> IO RunningJobs
+runAllJobs signalResult jobDescriptions runningJobs = do
+    x <- mapM (reRunJob signalResult runningJobs) jobDescriptions
+    return $ RunningJobs (M.fromList x)
+
+reRunJobs :: FilePath -> (JobStatusUpdate -> IO ()) -> [JobDescription] -> RunningJobs -> IO RunningJobs
 reRunJobs fileChanged signalResult jobDescriptions runningJobs = do
     let matchingJobs = filterJobsMatching fileChanged jobDescriptions
     newInfos <- mapM (reRunJob signalResult runningJobs) matchingJobs
-    return $ mergeTwoInfos newInfos runningJobs
+    let (RunningJobs x) = runningJobs
+    return $ RunningJobs $ M.union (M.fromList newInfos) x
 
-reRunJob :: (JobStatusUpdate -> IO ()) -> [RunningJob] -> JobDescription -> IO RunningJob
+reRunJob :: (JobStatusUpdate -> IO ()) -> RunningJobs -> JobDescription -> IO (String, ThreadId)
 reRunJob signalResult runningJobs job = do
-    cancel $ runningJobWithId (jobId job) runningJobs
+    cancel $ threadIdForJobWithId (jobId job) runningJobs
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
-    return $ RunningJob (jobId job) (Just threadId)
+    return (jobId job, threadId)
 
-cancel :: Maybe RunningJob -> IO ()
-cancel (Just (RunningJob _ (Just id))) = killThread id
-cancel _                               = return ()
+cancel :: Maybe ThreadId -> IO ()
+cancel (Just id) = killThread id
+cancel _         = return ()
 
 runThread :: JobDescription -> (JobStatusUpdate -> IO ()) -> IO ThreadId
 runThread job signalResult = do

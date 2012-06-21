@@ -46,7 +46,7 @@ redraw canvas monitorsRef event = do
 initOurStuff forceRedraw = do
     (watchDir, jobDescriptions, monitors) <- readConfig
 
-    runningJobsRef <- newIORef []
+    runningJobsRef <- newIORef emptyRunningJobs
     monitorsRef    <- newIORef monitors
 
     lock <- newEmptyMVar
