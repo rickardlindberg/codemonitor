@@ -62,7 +62,7 @@ initOurStuff forceRedraw = do
         -- redraw since state has changed
         forceRedraw
 
-    let jobFinishedHandler id status newOutput = mutateGlobalState (myFn3 updateJobStatus id status newOutput)
+    let jobFinishedHandler id status newOutput = mutateGlobalState (myFn3 storeJobResult id status newOutput)
 
     setupNotifications watchDir $ \filePath ->
         mutateGlobalState (reRunJobs filePath jobFinishedHandler)
@@ -71,7 +71,7 @@ initOurStuff forceRedraw = do
 
     return monitorsRef
 
-myFn3 updateJobStatus id status newOutput jobs runningInfos = return (updateJobStatus id status newOutput jobs runningInfos)
+myFn3 storeJobResult id status newOutput jobs runningInfos = return (storeJobResult id status newOutput jobs runningInfos)
 
 readConfig :: IO (String, Jobs, [Monitor])
 readConfig = do

@@ -68,10 +68,10 @@ runThread job signalResult = do
 
     forkIO $ onException waitForProcessToFinish (terminateProcess pid)
 
-updateJobStatus :: String -> Status -> String -> Jobs -> RunningJobInfos -> RunningJobInfos
-updateJobStatus theId status newOutput (Jobs jobs) runningInfos =
+storeJobResult :: String -> Status -> String -> Jobs -> RunningJobInfos -> RunningJobInfos
+storeJobResult jobId newStatus newOutput jobs runningInfos =
     processRunningInfos updateInfo runningInfos
     where
         updateInfo info
-            | runningJobId info == theId = Just $ RunningJobInfo theId status (jobOutput info ++ newOutput) Nothing
+            | runningJobId info == jobId = Just $ RunningJobInfo jobId newStatus (jobOutput info ++ newOutput) Nothing
             | otherwise                  = Just info
