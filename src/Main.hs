@@ -43,20 +43,20 @@ redraw canvas monitorsRef event = do
     return True
 
 initOurStuff forceRedraw = do
-    (watchDir, jobs, monitors) <- readConfig
+    (watchDir, jobDescriptions, monitors) <- readConfig
 
-    runningInfosRef <- newIORef (RunningJobInfos [])
-    monitorsRef     <- newIORef monitors
+    runningJobsRef <- newIORef []
+    monitorsRef    <- newIORef monitors
 
     lock <- newEmptyMVar
     let mutateGlobalState fn = do
         -- aquire lock
         putMVar lock ()
         -- modify refs
-        runningInfos <- readIORef runningInfosRef
-        newInfos     <- fn jobs runningInfos
-        modifyIORef monitorsRef (updateMonitors newInfos)
-        writeIORef runningInfosRef newInfos
+        runningJobs <- readIORef runningJobsRef
+        newRunning  <- fn jobDescriptions runningJobs
+        modifyIORef monitorsRef (updateMonitors newRunning)
+        writeIORef runningJobsRef newRunning
         -- release lock
         takeMVar lock
         -- redraw since state has changed
@@ -71,9 +71,9 @@ initOurStuff forceRedraw = do
 
     return monitorsRef
 
-myFn3 storeJobResult id status newOutput jobs runningInfos = return (storeJobResult id status newOutput jobs runningInfos)
+myFn3 storeJobResult id status newOutput jobDescriptions runningJobs = return (storeJobResult id status newOutput jobDescriptions runningJobs)
 
-readConfig :: IO (String, Jobs, [Monitor])
+readConfig :: IO (String, [JobDescription], [Monitor])
 readConfig = do
     args <- getArgs
     case args of

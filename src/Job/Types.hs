@@ -1,56 +1,43 @@
 module Job.Types where
 
 import Control.Concurrent
-import Data.Maybe
 
-data Status = Idle
-            | Working
-            | Fail
-            deriving (Eq, Show)
+data JobStatus
+    = Idle
+    | Working
+    | Fail
+    deriving (Eq, Show)
 
-data Job = Job
+data JobDescription = JobDescription
     { jobId     :: String
     , name      :: String
     , args      :: [String]
     , matchExpr :: String
     }
 
-data Jobs = Jobs [Job]
-
-data RunningJobInfo = RunningJobInfo
-    { runningJobId    :: String
-    , jobStatus       :: Status
-    , jobOutput       :: String
-    , jobThread       :: Maybe ThreadId
+data RunningJob = RunningJob
+    { runningJobId :: String
+    , jobStatus    :: JobStatus
+    , jobOutput    :: String
+    , jobThread    :: Maybe ThreadId
     }
 
-data RunningJobInfos = RunningJobInfos [RunningJobInfo]
-
-processRunningInfos :: (RunningJobInfo -> Maybe RunningJobInfo) -> RunningJobInfos -> RunningJobInfos
-processRunningInfos fn (RunningJobInfos infos) = RunningJobInfos $ mapMaybe fn infos
-
-mergeTwoInfos :: RunningJobInfos -> RunningJobInfos -> RunningJobInfos
-mergeTwoInfos (RunningJobInfos new) (RunningJobInfos old) =
-    RunningJobInfos $ filter notInNew old ++ new
+mergeTwoInfos :: [RunningJob] -> [RunningJob] -> [RunningJob]
+mergeTwoInfos new old =
+    filter notInNew old ++ new
     where
         notInNew info =
-            case runningJobInfoWithId (RunningJobInfos new) (runningJobId info) of
+            case runningJobWithId (runningJobId info) new of
                    Nothing -> True
                    Just x  -> False
 
-createJob :: String -> String -> [String] -> String -> Job
-createJob = Job
-
-createJobs :: [Job] -> Jobs
-createJobs = Jobs
-
-runningJobInfoWithId :: RunningJobInfos -> String -> Maybe RunningJobInfo
-runningJobInfoWithId (RunningJobInfos runningInfos) id = find runningInfos
+runningJobWithId :: String -> [RunningJob] -> Maybe RunningJob
+runningJobWithId id = find
     where
         find [] = Nothing
         find (x:xs)
             | runningJobId x == id = Just x
             | otherwise            = find xs
 
-fullName :: Job -> String
-fullName (Job { name = name, args = args }) = name ++ " " ++ unwords args
+fullName :: JobDescription -> String
+fullName (JobDescription { name = name, args = args }) = name ++ " " ++ unwords args

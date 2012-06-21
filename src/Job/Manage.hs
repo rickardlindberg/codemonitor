@@ -2,40 +2,41 @@ module Job.Manage where
 
 import Control.Concurrent
 import Control.Exception
+import Data.Maybe
 import Job.Types
 import System.Exit
 import System.IO
 import System.Process
 import Text.Regex.Posix
 
-type Signaller = String -> Status -> String -> IO ()
+type Signaller = String -> JobStatus -> String -> IO ()
 
-runAllJobs :: Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
-runAllJobs signalResult (Jobs jobs) runningInfos =
-    fmap RunningJobInfos (mapM (reRunJob signalResult runningInfos) jobs)
+runAllJobs :: Signaller -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
+runAllJobs signalResult jobDescriptions runningJobs =
+    mapM (reRunJob signalResult runningJobs) jobDescriptions
 
-reRunJobs :: FilePath -> Signaller -> Jobs -> RunningJobInfos -> IO RunningJobInfos
-reRunJobs fileChanged signalResult (Jobs jobs) runningInfos = do
-    let matchingJobs = filter isMatch jobs
-    newInfos <- mapM (reRunJob signalResult runningInfos) matchingJobs
-    return $ mergeTwoInfos (RunningJobInfos newInfos) runningInfos
+reRunJobs :: FilePath -> Signaller -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
+reRunJobs fileChanged signalResult jobDescriptions runningJobs = do
+    let matchingJobs = filter isMatch jobDescriptions
+    newInfos <- mapM (reRunJob signalResult runningJobs) matchingJobs
+    return $ mergeTwoInfos newInfos runningJobs
     where
         isMatch job = fileChanged =~ matchExpr job
 
-reRunJob :: Signaller -> RunningJobInfos -> Job -> IO RunningJobInfo
-reRunJob signalResult runningInfos job = do
-    cancel $ runningJobInfoWithId runningInfos (jobId job)
+reRunJob :: Signaller -> [RunningJob] -> JobDescription -> IO RunningJob
+reRunJob signalResult runningJobs job = do
+    cancel $ runningJobWithId (jobId job) runningJobs
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
     -- jobsRef will deadlock.
     threadId <- runThread job signalResult
-    let info = RunningJobInfo (jobId job) Working "" (Just threadId)
+    let info = RunningJob (jobId job) Working "" (Just threadId)
     return info
 
-cancel :: Maybe RunningJobInfo -> IO ()
-cancel (Just (RunningJobInfo _ _ _ (Just id))) = killThread id
-cancel _                                       = return ()
+cancel :: Maybe RunningJob -> IO ()
+cancel (Just (RunningJob _ _ _ (Just id))) = killThread id
+cancel _                                   = return ()
 
-runThread :: Job -> Signaller -> IO ThreadId
+runThread :: JobDescription -> Signaller -> IO ThreadId
 runThread job signalResult = do
     (_, Just hOut, Just hErr, pid) <-
         createProcess (proc (name job) (args job))
@@ -68,10 +69,10 @@ runThread job signalResult = do
 
     forkIO $ onException waitForProcessToFinish (terminateProcess pid)
 
-storeJobResult :: String -> Status -> String -> Jobs -> RunningJobInfos -> RunningJobInfos
-storeJobResult jobId newStatus newOutput jobs runningInfos =
-    processRunningInfos updateInfo runningInfos
+storeJobResult :: String -> JobStatus -> String -> [JobDescription] -> [RunningJob] -> [RunningJob]
+storeJobResult jobId newStatus newOutput jobDescriptions runningInfos =
+    mapMaybe updateInfo runningInfos
     where
         updateInfo info
-            | runningJobId info == jobId = Just $ RunningJobInfo jobId newStatus (jobOutput info ++ newOutput) Nothing
+            | runningJobId info == jobId = Just $ RunningJob jobId newStatus (jobOutput info ++ newOutput) Nothing
             | otherwise                  = Just info

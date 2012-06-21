@@ -3,20 +3,20 @@ module Config where
 import Job.Types
 import Monitor
 
-create :: FilePath -> IO (String, Jobs, [Monitor])
+create :: FilePath -> IO (String, [JobDescription], [Monitor])
 create configPath = readFile configPath >>= createFromConfig
 
-createFromConfig :: String -> IO (String, Jobs, [Monitor])
+createFromConfig :: String -> IO (String, [JobDescription], [Monitor])
 createFromConfig content = do
     let (watchDir:rest) = lines content
     let jobs = map jobDefToJob rest
     let monitors = map jobToMonitor jobs
-    return (watchDir, createJobs jobs, monitors)
+    return (watchDir, jobs, monitors)
 
-jobDefToJob :: String -> Job
+jobDefToJob :: String -> JobDescription
 jobDefToJob def =
     let (id:pattern:command:args) = words def
-    in createJob id command args pattern
+    in JobDescription id command args pattern
 
 jobToMonitor job =
     case jobId job of

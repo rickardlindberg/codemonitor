@@ -3,7 +3,7 @@ module Render.Graphics where
 import Control.Arrow
 import Control.Monad
 import Data.List.Utils
-import Graphics.Rendering.Cairo hiding (status, Status)
+import Graphics.Rendering.Cairo hiding (status)
 import Job.Types
 import Monitor
 import Render.Layout
@@ -116,11 +116,11 @@ withClipRegion (Rect x y w h) r = do
     r
     restore
 
-statusToBgColor :: Status -> Color
+statusToBgColor :: JobStatus -> Color
 statusToBgColor Idle    = successColor
 statusToBgColor Working = runningColor
 statusToBgColor Fail    = failureColor
 
-additionalLines :: Status -> String -> [String]
+additionalLines :: JobStatus -> String -> [String]
 additionalLines Fail s = lines s
 additionalLines _    _ = []

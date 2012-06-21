@@ -5,7 +5,7 @@ import Job.Types
 data Monitor = StatusCodeMonitor
                 { mJobId          :: String
                 , mJobName        :: String
-                , mJobStatus      :: Status
+                , mJobStatus      :: JobStatus
                 , mOutput         :: String
                 }
              | StdoutMonitor
@@ -15,16 +15,16 @@ data Monitor = StatusCodeMonitor
                 }
              deriving (Show, Eq)
 
-updateMonitors :: RunningJobInfos -> [Monitor] -> [Monitor]
-updateMonitors runningInfos = map updateMonitor
+updateMonitors :: [RunningJob] -> [Monitor] -> [Monitor]
+updateMonitors runningJobs = map updateMonitor
     where
         updateMonitor monitor@(StatusCodeMonitor {}) =
-            case runningJobInfoWithId runningInfos (mJobId monitor) of
+            case runningJobWithId (mJobId monitor) runningJobs of
                 Nothing -> monitor
                 Just x  -> monitor { mJobStatus = jobStatus x
                                    , mOutput    = jobOutput x
                                    }
         updateMonitor monitor@(StdoutMonitor {}) =
-            case runningJobInfoWithId runningInfos (mJobId monitor) of
+            case runningJobWithId (mJobId monitor)runningJobs of
                 Nothing -> monitor
                 Just x  -> monitor { mOutput = jobOutput x }
