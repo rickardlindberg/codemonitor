@@ -1,6 +1,7 @@
 module Job.Types where
 
 import Control.Concurrent
+import Text.Regex.Posix
 
 data JobStatus
     = Idle
@@ -14,6 +15,11 @@ data JobDescription = JobDescription
     , args      :: [String]
     , matchExpr :: String
     }
+
+filterJobsMatching :: FilePath -> [JobDescription] -> [JobDescription]
+filterJobsMatching fileChanged = filter isMatch
+    where
+        isMatch job = fileChanged =~ matchExpr job
 
 data RunningJob = RunningJob
     { runningJobId :: String

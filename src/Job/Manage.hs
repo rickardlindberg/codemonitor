@@ -7,7 +7,6 @@ import Job.Types
 import System.Exit
 import System.IO
 import System.Process
-import Text.Regex.Posix
 
 type Signaller = String -> JobStatus -> String -> IO ()
 
@@ -17,11 +16,9 @@ runAllJobs signalResult jobDescriptions runningJobs =
 
 reRunJobs :: FilePath -> Signaller -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
 reRunJobs fileChanged signalResult jobDescriptions runningJobs = do
-    let matchingJobs = filter isMatch jobDescriptions
+    let matchingJobs = filterJobsMatching fileChanged jobDescriptions
     newInfos <- mapM (reRunJob signalResult runningJobs) matchingJobs
     return $ mergeTwoInfos newInfos runningJobs
-    where
-        isMatch job = fileChanged =~ matchExpr job
 
 reRunJob :: Signaller -> [RunningJob] -> JobDescription -> IO RunningJob
 reRunJob signalResult runningJobs job = do
