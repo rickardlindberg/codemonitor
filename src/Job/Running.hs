@@ -21,6 +21,12 @@ data RunningJob = RunningJob
     , jobThread    :: Maybe ThreadId
     }
 
+data JobStatusUpdate = JobStatusUpdate
+    { sId     :: String
+    , sStatus :: JobStatus
+    , sOutput :: String
+    }
+
 mergeTwoInfos :: [RunningJob] -> [RunningJob] -> [RunningJob]
 mergeTwoInfos new old =
     filter notInNew old ++ new
@@ -38,19 +44,17 @@ runningJobWithId id = find
             | runningJobId x == id = Just x
             | otherwise            = find xs
 
-type Signaller = String -> JobStatus -> String -> IO ()
-
-runAllJobs :: Signaller -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
+runAllJobs :: (JobStatusUpdate -> IO ()) -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
 runAllJobs signalResult jobDescriptions runningJobs =
     mapM (reRunJob signalResult runningJobs) jobDescriptions
 
-reRunJobs :: FilePath -> Signaller -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
+reRunJobs :: FilePath -> (JobStatusUpdate -> IO ()) -> [JobDescription] -> [RunningJob] -> IO [RunningJob]
 reRunJobs fileChanged signalResult jobDescriptions runningJobs = do
     let matchingJobs = filterJobsMatching fileChanged jobDescriptions
     newInfos <- mapM (reRunJob signalResult runningJobs) matchingJobs
     return $ mergeTwoInfos newInfos runningJobs
 
-reRunJob :: Signaller -> [RunningJob] -> JobDescription -> IO RunningJob
+reRunJob :: (JobStatusUpdate -> IO ()) -> [RunningJob] -> JobDescription -> IO RunningJob
 reRunJob signalResult runningJobs job = do
     cancel $ runningJobWithId (jobId job) runningJobs
     -- NOTE: signalResult must be called asynchronously, otherwise the lock for
@@ -63,7 +67,7 @@ cancel :: Maybe RunningJob -> IO ()
 cancel (Just (RunningJob _ _ _ (Just id))) = killThread id
 cancel _                                   = return ()
 
-runThread :: JobDescription -> Signaller -> IO ThreadId
+runThread :: JobDescription -> (JobStatusUpdate -> IO ()) -> IO ThreadId
 runThread job signalResult = do
     (_, Just hOut, Just hErr, pid) <-
         createProcess (proc (name job) (args job))
@@ -91,13 +95,13 @@ runThread job signalResult = do
         exit <- waitForProcess pid
 
         if exit == ExitSuccess
-            then signalResult (jobId job) Idle (err ++ out)
-            else signalResult (jobId job) Fail (err ++ out)
+            then signalResult $ JobStatusUpdate (jobId job) Idle (err ++ out)
+            else signalResult $ JobStatusUpdate (jobId job) Fail (err ++ out)
 
     forkIO $ onException waitForProcessToFinish (terminateProcess pid)
 
-storeJobResult :: String -> JobStatus -> String -> [JobDescription] -> [RunningJob] -> [RunningJob]
-storeJobResult jobId newStatus newOutput jobDescriptions runningInfos =
+storeJobResult :: JobStatusUpdate -> [JobDescription] -> [RunningJob] -> [RunningJob]
+storeJobResult (JobStatusUpdate jobId newStatus newOutput) jobDescriptions runningInfos =
     mapMaybe updateInfo runningInfos
     where
         updateInfo info
