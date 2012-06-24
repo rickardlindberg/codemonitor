@@ -3,46 +3,18 @@ module Main (main) where
 import Config
 import Control.Concurrent
 import Data.IORef
-import Graphics.UI.Gtk
+import GUI
 import Job.Description
 import Job.Scheduler
 import Monitor
 import Notifier
-import Render.Graphics
 import System
 
 main :: IO ()
-main = do
-    initGUI
-    showMainWindow
-    mainGUI
+main = showMainWindow setupMonitors
 
-showMainWindow :: IO ()
-showMainWindow = do
-    mainWindow <- windowNew
-    canvas <- drawingAreaNew
-    set mainWindow [ windowTitle := "Code Monitor", containerChild := canvas ]
-
-    let forceRedraw = postGUIAsync $ widgetQueueDraw canvas
-
-    monitorsRef <- initOurStuff forceRedraw
-
-    timeoutAddFull (yield >> return True) priorityDefaultIdle 100
-
-    mainWindow `onDestroy` mainQuit
-    canvas     `onExpose`  redraw canvas monitorsRef
-
-    widgetShowAll mainWindow
-    return ()
-
-redraw canvas monitorsRef event = do
-    (w, h) <- widgetGetSize canvas
-    drawin <- widgetGetDrawWindow canvas
-    monitors <- readIORef monitorsRef
-    renderWithDrawable drawin (renderScreen monitors (fromIntegral w) (fromIntegral h))
-    return True
-
-initOurStuff forceRedraw = do
+setupMonitors :: IO () -> IO (IORef [Monitor])
+setupMonitors forceRedraw = do
     (watchDir, jobDescriptions, monitors) <- readConfig
 
     monitorsRef <- newIORef monitors
