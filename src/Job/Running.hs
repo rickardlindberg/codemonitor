@@ -2,6 +2,7 @@ module Job.Running where
 
 import Control.Concurrent
 import Control.Exception
+import Data.IORef
 import Job.Description
 import qualified Data.Map as M
 import System.Exit
@@ -20,40 +21,29 @@ data JobStatusUpdate = JobStatusUpdate
     , sOutput :: String
     }
 
-data RunningJobs = RunningJobs (M.Map String ThreadId)
+newJobScheduler :: (JobStatusUpdate -> IO ()) -> IO ([JobDescription] -> IO ())
+newJobScheduler signaller = do
+    lock <- newEmptyMVar
+    threadsRef <- newIORef M.empty
 
-emptyRunningJobs :: RunningJobs
-emptyRunningJobs = RunningJobs M.empty
+    let killThreadForJobWithId id = do
+        threads <- readIORef threadsRef
+        case M.lookup id threads of
+            Nothing       -> return ()
+            Just threadId -> do killThread threadId
+                                modifyIORef threadsRef (M.delete id)
+    let runJob job = do
+        threadId <- runThread job signaller
+        modifyIORef threadsRef (M.insert (jobId job) threadId)
 
-removeRunning :: String -> RunningJobs -> RunningJobs
-removeRunning id (RunningJobs map) = RunningJobs $ M.delete id map
+    let runJobs jobs = do
+        putMVar lock ()
+        mapM_ (killThreadForJobWithId . jobId) jobs
+        mapM_ runJob jobs
+        takeMVar lock
+        return ()
 
-threadIdForJobWithId :: String -> RunningJobs -> Maybe ThreadId
-threadIdForJobWithId id (RunningJobs map) = M.lookup id map
-
-runAllJobs :: (JobStatusUpdate -> IO ()) -> [JobDescription] -> RunningJobs -> IO RunningJobs
-runAllJobs signalResult jobDescriptions runningJobs = do
-    x <- mapM (reRunJob signalResult runningJobs) jobDescriptions
-    return $ RunningJobs (M.fromList x)
-
-reRunJobs :: FilePath -> (JobStatusUpdate -> IO ()) -> [JobDescription] -> RunningJobs -> IO RunningJobs
-reRunJobs fileChanged signalResult jobDescriptions runningJobs = do
-    let matchingJobs = filterJobsMatching fileChanged jobDescriptions
-    newInfos <- mapM (reRunJob signalResult runningJobs) matchingJobs
-    let (RunningJobs x) = runningJobs
-    return $ RunningJobs $ M.union (M.fromList newInfos) x
-
-reRunJob :: (JobStatusUpdate -> IO ()) -> RunningJobs -> JobDescription -> IO (String, ThreadId)
-reRunJob signalResult runningJobs job = do
-    cancel $ threadIdForJobWithId (jobId job) runningJobs
-    -- NOTE: signalResult must be called asynchronously, otherwise the lock for
-    -- jobsRef will deadlock.
-    threadId <- runThread job signalResult
-    return (jobId job, threadId)
-
-cancel :: Maybe ThreadId -> IO ()
-cancel (Just id) = killThread id
-cancel _         = return ()
+    return runJobs
 
 runThread :: JobDescription -> (JobStatusUpdate -> IO ()) -> IO ThreadId
 runThread job signalResult = do

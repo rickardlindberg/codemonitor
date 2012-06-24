@@ -9,8 +9,8 @@ data JobDescription = JobDescription
     , matchExpr :: String
     }
 
-filterJobsMatching :: FilePath -> [JobDescription] -> [JobDescription]
-filterJobsMatching fileChanged = filter isMatch
+filterJobsMatching :: [JobDescription] -> FilePath -> [JobDescription]
+filterJobsMatching jobDescriptions fileChanged = filter isMatch jobDescriptions
     where
         isMatch job = fileChanged =~ matchExpr job
 

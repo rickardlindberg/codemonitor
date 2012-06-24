@@ -2,7 +2,6 @@ module Main (main) where
 
 import Config
 import Control.Concurrent
-import Control.Monad
 import Data.IORef
 import Graphics.UI.Gtk
 import Job.Description
@@ -46,39 +45,19 @@ redraw canvas monitorsRef event = do
 initOurStuff forceRedraw = do
     (watchDir, jobDescriptions, monitors) <- readConfig
 
-    runningJobsRef <- newIORef emptyRunningJobs
-    monitorsRef    <- newIORef monitors
-
-    lock <- newEmptyMVar
-
-    let mutateGlobalState fn = do
-        -- aquire lock
-        putMVar lock ()
-        -- modify refs
-        runningJobs <- readIORef runningJobsRef
-        newRunning  <- fn jobDescriptions runningJobs
-        writeIORef runningJobsRef newRunning
-        -- release lock
-        takeMVar lock
-        -- redraw since state has changed
-        forceRedraw
-
+    monitorsRef <- newIORef monitors
+    monitorsLock <- newEmptyMVar
     let statusUpdateHandler newStatus = do
-        -- aquire lock
-        putMVar lock ()
-        -- modify refs
+        putMVar monitorsLock ()
         modifyIORef monitorsRef (updateMonitors newStatus)
-        when (sStatus newStatus /= Working) $
-            modifyIORef runningJobsRef (removeRunning (sId newStatus))
-        -- release lock
-        takeMVar lock
-        -- redraw since state has changed
+        takeMVar monitorsLock
         forceRedraw
 
-    setupNotifications watchDir $ \filePath ->
-        mutateGlobalState (reRunJobs filePath statusUpdateHandler)
+    runJobs <- newJobScheduler statusUpdateHandler
 
-    mutateGlobalState (runAllJobs statusUpdateHandler)
+    setupNotifications watchDir (runJobs . filterJobsMatching jobDescriptions)
+
+    runJobs jobDescriptions
 
     return monitorsRef
 
