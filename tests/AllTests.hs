@@ -1,5 +1,5 @@
 import Fixtures
-import Job.Running
+import Job.Scheduler
 import Monitor
 import Render.Layout
 import Render.Rect

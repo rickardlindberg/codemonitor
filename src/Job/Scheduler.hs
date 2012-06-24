@@ -1,4 +1,4 @@
-module Job.Running where
+module Job.Scheduler where
 
 import Control.Concurrent
 import Control.Exception

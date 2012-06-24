@@ -4,7 +4,7 @@ import Control.Arrow
 import Control.Monad
 import Data.List.Utils
 import Graphics.Rendering.Cairo hiding (status)
-import Job.Running
+import Job.Scheduler
 import Monitor
 import Render.Layout
 import Render.Rect
