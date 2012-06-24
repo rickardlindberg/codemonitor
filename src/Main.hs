@@ -3,7 +3,7 @@ module Main (main) where
 import Config
 import Control.Concurrent
 import Data.IORef
-import GUI
+import GUI.MainWindow
 import Job.Description
 import Job.Scheduler
 import Monitor

@@ -1,9 +1,9 @@
-module GUI where
+module GUI.MainWindow where
 
 import Control.Concurrent
 import Data.IORef
 import Graphics.UI.Gtk
-import Render.Graphics
+import GUI.Renderer
 
 showMainWindow setupMonitors = do
     initGUI

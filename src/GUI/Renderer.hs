@@ -1,4 +1,4 @@
-module Render.Graphics where
+module GUI.Renderer where
 
 import Control.Arrow
 import Control.Monad
