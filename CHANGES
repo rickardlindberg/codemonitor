@@ -1,6 +1,10 @@
 codemonitor 0.3, released on ...
 ================================
 
+New features, enhancements:
+
+  * Only redraw screen when needed
+
 Bug fixes:
 
   * Make single failing job fill whole screen
