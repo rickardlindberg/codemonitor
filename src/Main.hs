@@ -27,7 +27,7 @@ showMainWindow = do
 
     monitorsRef <- initOurStuff forceRedraw
 
-    timeoutAddFull (forceRedraw >> return True) priorityDefaultIdle 100
+    timeoutAddFull (yield >> return True) priorityDefaultIdle 100
 
     mainWindow `onDestroy` mainQuit
     canvas     `onExpose`  redraw canvas monitorsRef
