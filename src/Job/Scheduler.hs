@@ -26,22 +26,25 @@ newJobScheduler signaller = do
     lock <- newEmptyMVar
     threadsRef <- newIORef M.empty
 
+    let runJob job = do
+        threadId <- runThread job signaller
+        modifyIORef threadsRef (M.insert (jobId job) threadId)
+
     let killThreadForJobWithId id = do
         threads <- readIORef threadsRef
         case M.lookup id threads of
             Nothing       -> return ()
             Just threadId -> do killThread threadId
                                 modifyIORef threadsRef (M.delete id)
-    let runJob job = do
-        threadId <- runThread job signaller
-        modifyIORef threadsRef (M.insert (jobId job) threadId)
+
+    let reRunJob job = do
+        killThreadForJobWithId (jobId job)
+        runJob job
 
     let runJobs jobs = do
         putMVar lock ()
-        mapM_ (killThreadForJobWithId . jobId) jobs
-        mapM_ runJob jobs
+        mapM_ reRunJob jobs
         takeMVar lock
-        return ()
 
     return runJobs
 
