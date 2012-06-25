@@ -4,6 +4,7 @@ codemonitor 0.3, released on ...
 New features, enhancements:
 
   * Only redraw screen when needed
+  * Writes codemonitor.errors file for use in Vim
 
 Bug fixes:
 

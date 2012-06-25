@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Config
+import Monitor.ErrorFile
 import Control.Concurrent
 import Data.IORef
 import GUI.MainWindow
@@ -11,7 +12,9 @@ import Notifier
 import System
 
 main :: IO ()
-main = showMainWindow setupMonitors
+main = do
+    showMainWindow setupMonitors
+    removeErrorFile
 
 setupMonitors :: IO () -> IO (IORef [Monitor])
 setupMonitors forceRedraw = do
@@ -22,6 +25,7 @@ setupMonitors forceRedraw = do
     let statusUpdateHandler newStatus = do
         putMVar monitorsLock ()
         modifyIORef monitorsRef (updateMonitors newStatus)
+        readIORef monitorsRef >>= writeErrorFile
         takeMVar monitorsLock
         forceRedraw
 
