@@ -8,7 +8,7 @@ New features, enhancements:
 
 Bug fixes:
 
-  * Make single failing job fill whole screen
+  * Make single job fill whole screen if it's failing
 
 codemonitor 0.2, released on 8 June 2012
 ========================================
